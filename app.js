@@ -2438,6 +2438,7 @@
   }
 
   async function start() {
+    fitViewport();
     let raw = null;
     let basePlanLoadFailed = false;
     try {
@@ -2488,10 +2489,13 @@
     await loadIllustrations();
     navButtons.forEach((nav) => nav.addEventListener("click", () => setScreen(nav.dataset.screen)));
     fitViewport();
-    window.addEventListener("resize", fitViewport);
     window.addEventListener("orientationchange", () => window.setTimeout(fitViewport, 250));
     window.addEventListener("pageshow", fitViewport);
-    if (window.visualViewport) window.visualViewport.addEventListener("resize", fitViewport);
+    document.addEventListener("focusout", () => window.setTimeout(() => {
+      const active = document.activeElement;
+      if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+      if (window.scrollY || (window.visualViewport && window.visualViewport.offsetTop)) window.scrollTo(0, 0);
+    }, 60));
     restTimerToggle.addEventListener("click", toggleRestTimer);
     restTimerReset.addEventListener("click", resetRestTimer);
     document.getElementById("rest-timer-back").addEventListener("click", () => adjustRestTimer(-10));
