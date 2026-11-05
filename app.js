@@ -1114,7 +1114,9 @@
       `Finestra: ${window.innerWidth} × ${window.innerHeight}`,
       `Schermo: ${window.screen.width} × ${window.screen.height}`,
       `Viewport visivo: ${window.visualViewport ? Math.round(window.visualViewport.width) + " × " + Math.round(window.visualViewport.height) : "n.d."}`,
-      `App: ${Math.round(shell.width)} × ${Math.round(shell.height)}`,
+      `App: ${Math.round(shell.width)} × ${Math.round(shell.height)} (alto ${Math.round(shell.top)}, basso ${Math.round(shell.bottom)})`,
+      `Barra in basso: alto ${Math.round(document.querySelector(".bottom-nav").getBoundingClientRect().top)}, basso ${Math.round(document.querySelector(".bottom-nav").getBoundingClientRect().bottom)}`,
+      `Viewport visivo scostamento: ${window.visualViewport ? Math.round(window.visualViewport.offsetTop) : "n.d."}`,
       `Altezza usata: ${document.documentElement.style.getPropertyValue("--app-height") || "n.d."}`,
       `Margini sicuri (alto/dx/basso/sx): ${insets}`,
       `Installata (standalone): ${isStandalone() ? "sì" : "no"}`,
@@ -1122,6 +1124,26 @@
     ];
     const card = node("div", "info-card");
     card.append(node("strong", "", "Diagnostica schermo"), node("pre", "diagnostics", lines.join("\n")));
+    card.append(button("Mostra linee di prova", "secondary-button", () => {
+      const old = document.getElementById("debug-lines");
+      if (old) {
+        old.remove();
+        return;
+      }
+      const layer = node("div");
+      layer.id = "debug-lines";
+      layer.style.cssText = "position:fixed;inset:0;z-index:99999;pointer-events:none";
+      const line = (css, label) => {
+        const item = node("div", "", label);
+        item.style.cssText = `position:fixed;left:0;right:0;height:3px;font:700 11px sans-serif;color:#fff;${css}`;
+        layer.append(item);
+      };
+      line("top:0;background:#f00", "");
+      line(`top:${window.innerHeight - 3}px;background:#0af`, "");
+      line(`top:${window.screen.height - 3}px;background:#f0f`, "");
+      line("bottom:0;background:#fa0", "");
+      document.body.append(layer);
+    }));
     return card;
   }
 

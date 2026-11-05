@@ -253,7 +253,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .record-data { margin: 9px 0 0; color: #ddd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .bottom-nav {
   position: absolute; z-index: 20; left: 0; right: 0; bottom: 0; width: auto; display: grid;
-  grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 8px 10px calc(10px + max(env(safe-area-inset-bottom), 20px));
   border-top: 1px solid #3b3b3b; border-radius: 22px 22px 0 0;
   background: rgba(22, 22, 22, .96);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, .5);
