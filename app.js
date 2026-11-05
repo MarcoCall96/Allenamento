@@ -1099,6 +1099,9 @@
     const backupHeading = node("div", "section-heading");
     backupHeading.append(node("h2", "", "Conserva i tuoi dati"));
     view.append(backupHeading, backupCard());
+    const script = document.querySelector('script[src*="app.js"]');
+    const version = script ? new URL(script.src).searchParams.get("v") : "";
+    if (version) view.append(node("p", "hint app-version", `Versione app: ${version}`));
   }
 
   function renderHome() {
