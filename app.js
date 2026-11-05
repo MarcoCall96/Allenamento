@@ -1095,11 +1095,18 @@
 
   function fitViewport() {
     const root = document.documentElement;
-    const visible = Math.max(window.innerHeight, window.visualViewport ? window.visualViewport.height : 0);
     const portrait = window.innerHeight >= window.innerWidth;
-    const screenHeight = portrait ? Math.max(window.screen.height, window.screen.width) : Math.min(window.screen.height, window.screen.width);
-    const target = isStandalone() && screenHeight > visible && screenHeight - visible < 120 ? screenHeight : visible;
-    root.style.setProperty("--app-height", `${Math.round(target)}px`);
+    const gap = Math.max(window.screen.height, window.screen.width) - Math.max(window.innerHeight, window.innerWidth);
+    const iphone = /iPhone/.test(navigator.userAgent);
+    // Senza viewport-fit=cover iOS non espone i margini sicuri: se la finestra installata è più corta
+    // dello schermo, riserviamo lo spazio dell'indicatore Home in basso.
+    if (isStandalone() && iphone && portrait && gap >= 40) {
+      root.style.setProperty("--safe-bottom", "34px");
+      root.style.setProperty("--safe-top", "0px");
+    } else {
+      root.style.removeProperty("--safe-bottom");
+      root.style.removeProperty("--safe-top");
+    }
   }
 
   function diagnosticsCard() {
@@ -1109,6 +1116,11 @@
     const style = getComputedStyle(probe);
     const insets = [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].join(" / ");
     probe.remove();
+    const vhProbe = node("div");
+    vhProbe.style.cssText = "position:fixed;visibility:hidden;top:0;height:100vh;width:1px";
+    document.body.append(vhProbe);
+    const probeVh = Math.round(vhProbe.getBoundingClientRect().height);
+    vhProbe.remove();
     const shell = document.querySelector(".app-shell").getBoundingClientRect();
     const lines = [
       `Finestra: ${window.innerWidth} × ${window.innerHeight}`,
@@ -1117,7 +1129,8 @@
       `App: ${Math.round(shell.width)} × ${Math.round(shell.height)} (alto ${Math.round(shell.top)}, basso ${Math.round(shell.bottom)})`,
       `Barra in basso: alto ${Math.round(document.querySelector(".bottom-nav").getBoundingClientRect().top)}, basso ${Math.round(document.querySelector(".bottom-nav").getBoundingClientRect().bottom)}`,
       `Viewport visivo scostamento: ${window.visualViewport ? Math.round(window.visualViewport.offsetTop) : "n.d."}`,
-      `Altezza usata: ${document.documentElement.style.getPropertyValue("--app-height") || "n.d."}`,
+      `Altezza usata: ${document.documentElement.clientHeight}px (100vh: ${probeVh}px)`,
+      `Margini applicati (alto/basso): ${getComputedStyle(document.documentElement).getPropertyValue("--safe-top").trim() || "env"} / ${getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom").trim() || "env"}`,
       `Margini sicuri (alto/dx/basso/sx): ${insets}`,
       `Installata (standalone): ${isStandalone() ? "sì" : "no"}`,
       `Sistema: ${(navigator.userAgent.match(/(?:iPhone )?OS [\d_]+|Android [\d.]+/) || ["n.d."])[0]}`,

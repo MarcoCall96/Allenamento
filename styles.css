@@ -1,4 +1,6 @@
 :root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
   --background: #080808;
   --surface: #1b1b1b;
@@ -30,14 +32,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   outline: 2px solid var(--mint);
   outline-offset: 3px;
 }
-.device-frame { position: fixed; top: 0; left: 0; right: 0; height: var(--app-height, 100%); min-height: 0; }
+.device-frame { position: fixed; inset: 0; min-height: 0; }
 .app-shell {
   position: relative; max-width: 520px; height: 100%;
   margin: 0 auto; overflow: hidden; background: var(--background);
 }
 .scroll-content {
   height: 100%; overflow-y: auto; overscroll-behavior: contain;
-  padding: calc(18px + env(safe-area-inset-top)) 18px calc(190px + env(safe-area-inset-bottom));
+  padding: calc(18px + var(--safe-top)) 18px calc(190px + var(--safe-bottom));
   scrollbar-width: none;
 }
 .scroll-content::-webkit-scrollbar { display: none; }
@@ -253,7 +255,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .record-data { margin: 9px 0 0; color: #ddd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .bottom-nav {
   position: absolute; z-index: 20; left: 0; right: 0; bottom: 0; width: auto; display: grid;
-  grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 8px 10px calc(10px + max(env(safe-area-inset-bottom), 20px));
+  grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 8px 10px calc(10px + max(var(--safe-bottom), 12px));
   border-top: 1px solid #3b3b3b; border-radius: 22px 22px 0 0;
   background: rgba(22, 22, 22, .96);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, .5);
@@ -312,7 +314,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .exercise-instructions h4 { margin: 0; color: #c6f135; font-size: 13px; }
 .exercise-instruction-list { display: grid; gap: 7px; margin: 9px 0 0; padding-left: 17px; color: #d0d0d0; font-size: 12px; line-height: 1.5; }
 .rest-timer-dock {
-  position: absolute; z-index: 19; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom)); left: 12px;
+  position: absolute; z-index: 19; right: 12px; bottom: calc(86px + var(--safe-bottom)); left: 12px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px;
   padding: 7px 12px; border: 1px solid #454545; border-radius: 10px;
   background: #252525; box-shadow: 0 8px 18px rgba(0, 0, 0, .45);
@@ -380,7 +382,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .exercise-sheet {
   position: absolute; z-index: 40; inset: 0; display: flex; flex-direction: column; background: var(--background);
-  padding-top: calc(env(safe-area-inset-top) + 6px);
+  padding-top: calc(var(--safe-top) + 6px);
 }
 .sheet-top { display: flex; align-items: center; gap: 14px; padding: 10px 16px; }
 .sheet-icon { width: 36px; height: 36px; padding: 0; border: 0; background: transparent; color: #e8e8e8; font-size: 20px; }
@@ -398,7 +400,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .exercise-instructions > summary { color: var(--mint); font-size: 14px; font-weight: 800; cursor: pointer; }
 .exercise-instructions[open] > summary { margin-bottom: 4px; }
 .sheet-bottom {
-  display: grid; gap: 10px; padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+  display: grid; gap: 10px; padding: 10px 16px calc(14px + var(--safe-bottom));
   border-top: 1px solid #2a2a2a; background: #0e0e0e;
 }
 .sheet-bottom .rest-timer-dock {
