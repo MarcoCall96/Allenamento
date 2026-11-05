@@ -30,7 +30,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   outline: 2px solid var(--mint);
   outline-offset: 3px;
 }
-.device-frame { position: fixed; inset: 0; min-height: 0; }
+.device-frame { position: fixed; top: 0; left: 0; right: 0; height: var(--app-height, 100%); min-height: 0; }
 .app-shell {
   position: relative; max-width: 520px; height: 100%;
   margin: 0 auto; overflow: hidden; background: var(--background);
@@ -414,6 +414,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .history-panel-row strong { color: #f2f2f2; font-size: 14px; text-transform: capitalize; }
 .history-panel-row small { color: var(--muted); font-size: 12px; }
 .history-line { color: #e6e6e6; font-size: 15px; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.app-version { margin-top: 18px; text-align: center; }
+.diagnostics { margin: 8px 0 0; color: var(--muted); font: 12px/1.6 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
 .next-workout { margin-top: 12px; }
 .next-workout strong { display: block; font-size: 22px; letter-spacing: -.03em; }
 .next-workout span { display: block; margin-top: 3px; color: rgba(245, 245, 245, .68); font-size: 13px; }

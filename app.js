@@ -1088,6 +1088,43 @@
     });
   }
 
+  function isStandalone() {
+    return window.navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  }
+
+  function fitViewport() {
+    const root = document.documentElement;
+    const visible = Math.max(window.innerHeight, window.visualViewport ? window.visualViewport.height : 0);
+    const portrait = window.innerHeight >= window.innerWidth;
+    const screenHeight = portrait ? Math.max(window.screen.height, window.screen.width) : Math.min(window.screen.height, window.screen.width);
+    const target = isStandalone() && screenHeight > visible && screenHeight - visible < 120 ? screenHeight : visible;
+    root.style.setProperty("--app-height", `${Math.round(target)}px`);
+  }
+
+  function diagnosticsCard() {
+    const probe = node("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)";
+    document.body.append(probe);
+    const style = getComputedStyle(probe);
+    const insets = [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].join(" / ");
+    probe.remove();
+    const shell = document.querySelector(".app-shell").getBoundingClientRect();
+    const lines = [
+      `Finestra: ${window.innerWidth} × ${window.innerHeight}`,
+      `Schermo: ${window.screen.width} × ${window.screen.height}`,
+      `Viewport visivo: ${window.visualViewport ? Math.round(window.visualViewport.width) + " × " + Math.round(window.visualViewport.height) : "n.d."}`,
+      `App: ${Math.round(shell.width)} × ${Math.round(shell.height)}`,
+      `Altezza usata: ${document.documentElement.style.getPropertyValue("--app-height") || "n.d."}`,
+      `Margini sicuri (alto/dx/basso/sx): ${insets}`,
+      `Installata (standalone): ${isStandalone() ? "sì" : "no"}`,
+      `Sistema: ${(navigator.userAgent.match(/(?:iPhone )?OS [\d_]+|Android [\d.]+/) || ["n.d."])[0]}`,
+    ];
+    const card = node("div", "info-card");
+    card.append(node("strong", "", "Diagnostica schermo"), node("pre", "diagnostics", lines.join("\n")));
+    return card;
+  }
+
   function renderMore() {
     const view = views.more;
     view.replaceChildren();
@@ -1102,6 +1139,7 @@
     const script = document.querySelector('script[src*="app.js"]');
     const version = script ? new URL(script.src).searchParams.get("v") : "";
     if (version) view.append(node("p", "hint app-version", `Versione app: ${version}`));
+    view.append(diagnosticsCard());
   }
 
   function renderHome() {
@@ -2414,6 +2452,11 @@
     ensureHealth();
     await loadIllustrations();
     navButtons.forEach((nav) => nav.addEventListener("click", () => setScreen(nav.dataset.screen)));
+    fitViewport();
+    window.addEventListener("resize", fitViewport);
+    window.addEventListener("orientationchange", () => window.setTimeout(fitViewport, 250));
+    window.addEventListener("pageshow", fitViewport);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", fitViewport);
     restTimerToggle.addEventListener("click", toggleRestTimer);
     restTimerReset.addEventListener("click", resetRestTimer);
     document.getElementById("rest-timer-back").addEventListener("click", () => adjustRestTimer(-10));
