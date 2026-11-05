@@ -1,0 +1,274 @@
+[
+  {
+    "id": "multipower-30",
+    "title": "Panca 30° al multipower",
+    "equipment": "Multipower · panca inclinata",
+    "src": "./assets/illustrazioni/multipower-30.svg",
+    "matches": [
+      "Panca 30° al Multipower"
+    ]
+  },
+  {
+    "id": "pulley-basso",
+    "title": "Pulley basso",
+    "equipment": "Pulley basso · cavo",
+    "src": "./assets/illustrazioni/pulley-basso.svg",
+    "matches": [
+      "Pulley Basso presa larga (gomiti a 45°, dorso alto)"
+    ]
+  },
+  {
+    "id": "panca-manubri",
+    "title": "Spinte con manubri su panca piana",
+    "equipment": "Panca piana · manubri",
+    "src": "./assets/illustrazioni/panca-manubri.svg",
+    "matches": [
+      "Spinte Manubri Panca Piana"
+    ]
+  },
+  {
+    "id": "lat-monobraccio",
+    "title": "Lat machine monobraccio",
+    "equipment": "Lat machine · maniglia singola",
+    "src": "./assets/illustrazioni/lat-monobraccio.svg",
+    "matches": [
+      "Lat Machine Monobraccio (cavo alto, seduto)"
+    ]
+  },
+  {
+    "id": "pec-deck",
+    "title": "Pec deck",
+    "equipment": "Pec deck",
+    "src": "./assets/illustrazioni/pec-deck.svg",
+    "matches": [
+      "Pec Deck (pausa 1\" in apertura)"
+    ]
+  },
+  {
+    "id": "alzate-manubri",
+    "title": "Alzate laterali da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/alzate-manubri.svg",
+    "matches": [
+      "Alzate Laterali Manubri da seduto",
+      "Alzate Laterali Manubri da seduto — pompaggio leggero"
+    ]
+  },
+  {
+    "id": "french-sdraiato",
+    "title": "French press da sdraiato",
+    "equipment": "Panca piana · manubri",
+    "src": "./assets/illustrazioni/french-sdraiato.svg",
+    "matches": [
+      "SS stessa panca piana: French Press Manubri da sdraiato"
+    ]
+  },
+  {
+    "id": "curl-alternato",
+    "title": "Curl alternato da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/curl-alternato.svg",
+    "matches": [
+      "SS stessa panca piana: Curl Manubri alternato da seduto"
+    ]
+  },
+  {
+    "id": "pressa-bassa",
+    "title": "Pressa 45° · piedi bassi e stretti",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/pressa-bassa.svg",
+    "matches": [
+      "Pressa 45° — piedi bassi e stretti (quad)"
+    ]
+  },
+  {
+    "id": "leg-curl-seduto",
+    "title": "Leg curl seduto",
+    "equipment": "Leg curl seduto",
+    "src": "./assets/illustrazioni/leg-curl-seduto.svg",
+    "matches": [
+      "Leg Curl Seduto"
+    ]
+  },
+  {
+    "id": "leg-extension",
+    "title": "Leg extension",
+    "equipment": "Leg extension",
+    "src": "./assets/illustrazioni/leg-extension.svg",
+    "matches": [
+      "Leg Extension (ultima serie: +2 mini-serie da 4 reps con 15\" di pausa)"
+    ]
+  },
+  {
+    "id": "calf-pressa",
+    "title": "Calf alla pressa",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/calf-pressa.svg",
+    "matches": [
+      "Calf alla Pressa (pausa 2\" in basso)"
+    ]
+  },
+  {
+    "id": "dead-bug",
+    "title": "Dead bug",
+    "equipment": "Tappetino",
+    "src": "./assets/illustrazioni/dead-bug.svg",
+    "matches": [
+      "Core: Dead Bug (espira a ogni rep)"
+    ]
+  },
+  {
+    "id": "tapis-roulant",
+    "title": "Tapis roulant inclinato",
+    "equipment": "Tapis roulant",
+    "src": "./assets/illustrazioni/tapis-roulant.svg",
+    "matches": [
+      "Tapis Roulant inclinato 5-8%",
+      "Tapis Roulant inclinato 5-8%"
+    ]
+  },
+  {
+    "id": "shoulder-press",
+    "title": "Shoulder press macchina",
+    "equipment": "Shoulder press",
+    "src": "./assets/illustrazioni/shoulder-press.svg",
+    "matches": [
+      "Shoulder Press Macchina (schiena adesa)"
+    ]
+  },
+  {
+    "id": "lat-neutra",
+    "title": "Lat machine presa neutra",
+    "equipment": "Lat machine · impugnatura neutra",
+    "src": "./assets/illustrazioni/lat-neutra.svg",
+    "matches": [
+      "Lat Machine presa neutra larga"
+    ]
+  },
+  {
+    "id": "chest-press",
+    "title": "Chest press orizzontale",
+    "equipment": "Chest press orizzontale",
+    "src": "./assets/illustrazioni/chest-press.svg",
+    "matches": [
+      "Chest Press Orizzontale (macchina)"
+    ]
+  },
+  {
+    "id": "rematore-appoggiato",
+    "title": "Rematore con petto appoggiato",
+    "equipment": "Rematore · supporto per il petto",
+    "src": "./assets/illustrazioni/rematore-appoggiato.svg",
+    "matches": [
+      "Rematore con petto appoggiato (T-bar / macchina)"
+    ]
+  },
+  {
+    "id": "alzate-cavo",
+    "title": "Alzate laterali al cavo",
+    "equipment": "Cavo basso · maniglia",
+    "src": "./assets/illustrazioni/alzate-cavo.svg",
+    "matches": [
+      "Alzate Laterali Cavo Monolaterale (cavo dietro la schiena)"
+    ]
+  },
+  {
+    "id": "croci-cavi",
+    "title": "Croci ai cavi dal basso",
+    "equipment": "Cavi bassi · maniglie",
+    "src": "./assets/illustrazioni/croci-cavi.svg",
+    "matches": [
+      "Croci ai Cavi dal basso verso l'alto (petto alto)"
+    ]
+  },
+  {
+    "id": "french-seduto",
+    "title": "French press sopra la testa",
+    "equipment": "Panca · manubrio",
+    "src": "./assets/illustrazioni/french-seduto.svg",
+    "matches": [
+      "SS stessa panca: French Press sopra la testa con 1 manubrio da seduto"
+    ]
+  },
+  {
+    "id": "hammer-curl",
+    "title": "Hammer curl da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/hammer-curl.svg",
+    "matches": [
+      "SS stessa panca: Hammer Curl Manubri da seduto"
+    ]
+  },
+  {
+    "id": "hip-thrust",
+    "title": "Hip thrust macchina",
+    "equipment": "Hip thrust machine",
+    "src": "./assets/illustrazioni/hip-thrust.svg",
+    "matches": [
+      "Hip Thrust Macchina (espira in salita, pausa 1\" in alto)"
+    ]
+  },
+  {
+    "id": "pressa-alta",
+    "title": "Pressa 45° · piedi alti e larghi",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/pressa-alta.svg",
+    "matches": [
+      "Pressa 45° — piedi alti e larghi (glutei/femorali)"
+    ]
+  },
+  {
+    "id": "leg-curl-sdraiato",
+    "title": "Leg curl sdraiato",
+    "equipment": "Leg curl sdraiato",
+    "src": "./assets/illustrazioni/leg-curl-sdraiato.svg",
+    "matches": [
+      "Leg Curl Sdraiato"
+    ]
+  },
+  {
+    "id": "hyperextension",
+    "title": "Hyperextension 45°",
+    "equipment": "Panca per hyperextension 45°",
+    "src": "./assets/illustrazioni/hyperextension.svg",
+    "matches": [
+      "Hyperextension 45° (focus glutei, schiena leggermente arrotondata)"
+    ]
+  },
+  {
+    "id": "abductor",
+    "title": "Abductor machine",
+    "equipment": "Abductor machine",
+    "src": "./assets/illustrazioni/abductor.svg",
+    "matches": [
+      "Abductor Machine (busto leggermente in avanti)"
+    ]
+  },
+  {
+    "id": "calf-seduto",
+    "title": "Calf raise da seduto",
+    "equipment": "Calf raise da seduto",
+    "src": "./assets/illustrazioni/calf-seduto.svg",
+    "matches": [
+      "Calf Raise da Seduto (pausa 1\" in alto)"
+    ]
+  },
+  {
+    "id": "reverse-pec-deck",
+    "title": "Reverse pec deck",
+    "equipment": "Reverse pec deck",
+    "src": "./assets/illustrazioni/reverse-pec-deck.svg",
+    "matches": [
+      "Reverse Pec Deck"
+    ]
+  },
+  {
+    "id": "pallof-press",
+    "title": "Pallof press",
+    "equipment": "Cavo · maniglia",
+    "src": "./assets/illustrazioni/pallof-press.svg",
+    "matches": [
+      "Core: Pallof Press ai cavi"
+    ]
+  }
+]

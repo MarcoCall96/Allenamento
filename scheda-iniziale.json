@@ -1,0 +1,630 @@
+{
+  "format": "palestra-plan-v1",
+  "id": "blocco-iniziale",
+  "name": "Blocco 2",
+  "weeks": 6,
+  "rir": {
+    "multi": [
+      "3",
+      "2",
+      "2",
+      "1-2",
+      "1",
+      "1"
+    ],
+    "iso": [
+      "2",
+      "2",
+      "1-2",
+      "1",
+      "1",
+      "0-1"
+    ]
+  },
+  "days": [
+    {
+      "id": "day-1",
+      "name": "Upper A",
+      "subtitle": "Petto e dorso",
+      "exercises": [
+        {
+          "id": "exercise-1",
+          "name": "Panca 30° al Multipower",
+          "instructions": "Regola la panca a circa 30°, appoggia bene schiena e piedi e posiziona la sbarra sopra la parte alta del petto.\nScendi lentamente mantenendo i polsi sopra i gomiti; spingi senza rimbalzo e senza inarcare la schiena.\nEspira mentre spingi e non trattenere il respiro.",
+          "reps": "6-10",
+          "rest": "2'30\"",
+          "sets": [
+            3,
+            3,
+            3,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-2",
+          "name": "Pulley Basso presa larga (gomiti a 45°, dorso alto)",
+          "instructions": "Siediti stabile con il busto verticale e le braccia distese senza incurvare la schiena.\nTira la presa verso la parte alta dell'addome, guidando coi gomiti a circa 45° e avvicinando le scapole.\nRitorna lentamente in avanti senza oscillare; espira durante la tirata.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-3",
+          "name": "Spinte Manubri Panca Piana",
+          "instructions": "Sdraiati sulla panca piana con i piedi a terra e i manubri ai lati del petto.\nSpingi verso l'alto in modo controllato senza far sbattere i manubri; abbassali fin dove mantieni spalle e polsi comodi.\nEspira nella spinta e scegli un peso che non ti costringa a trattenere il fiato.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-4",
+          "name": "Lat Machine Monobraccio (cavo alto, seduto)",
+          "instructions": "Siediti al cavo alto con il busto stabile e la spalla del braccio che lavora rilassata e lontana dall'orecchio.\nPorta il gomito verso il fianco senza ruotare il busto; lascia risalire il braccio lentamente.\nCompleta le ripetizioni da un lato, poi dall'altro; recupera solo dopo entrambi.",
+          "reps": "10-12/braccio",
+          "rest": "1'",
+          "sets": [
+            2,
+            2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": true,
+          "pair": ""
+        },
+        {
+          "id": "exercise-5",
+          "name": "Pec Deck (pausa 1\" in apertura)",
+          "instructions": "Regola sedile e schienale affinché le maniglie siano all'altezza del petto; tieni i gomiti morbidi.\nAvvicina le braccia davanti al petto senza urtare i supporti, poi riapri con controllo e mantieni 1 secondo nella posizione di allungamento.\nNon forzare l'apertura oltre il movimento comodo.",
+          "reps": "12-15",
+          "rest": "1'15\"",
+          "sets": [
+            2,
+            2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-6",
+          "name": "Alzate Laterali Manubri da seduto",
+          "instructions": "Siediti con il busto fermo e i manubri ai lati, gomiti leggermente piegati.\nSolleva le braccia lateralmente fino a circa l'altezza delle spalle, senza slancio né scrollate; abbassa lentamente.\nMantieni il carico leggero abbastanza da controllare ogni ripetizione.",
+          "reps": "12-20",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-7a",
+          "name": "SS stessa panca piana: French Press Manubri da sdraiato",
+          "instructions": "Sdraiati sulla panca e porta i manubri sopra le spalle, con gomiti rivolti verso l'alto.\nPiega i gomiti portando i manubri vicino ai lati della testa, poi distendili senza muovere le spalle.\nSe fai la superserie, passa al curl sulla stessa panca prima del recupero.",
+          "reps": "8-12",
+          "rest": "—",
+          "sets": [
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": "7"
+        },
+        {
+          "id": "exercise-7b",
+          "name": "SS stessa panca piana: Curl Manubri alternato da seduto",
+          "instructions": "Siediti con la schiena stabile e i gomiti vicini ai fianchi.\nFletti un gomito alla volta senza dondolare il busto; abbassa il manubrio lentamente prima di alternare.\nConta le ripetizioni per ciascun braccio; nella superserie eseguilo dopo la French Press.",
+          "reps": "10-12/braccio",
+          "rest": "1'15\"",
+          "sets": [
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": true,
+          "pair": "7"
+        }
+      ]
+    },
+    {
+      "id": "day-2",
+      "name": "Lower A",
+      "subtitle": "Quadricipiti",
+      "exercises": [
+        {
+          "id": "exercise-1",
+          "name": "Pressa 45° — piedi bassi e stretti (quad)",
+          "instructions": "Sistema i piedi bassi e circa alla larghezza delle anche; appoggia tutta la schiena allo schienale.\nScendi fin dove il bacino resta appoggiato e le ginocchia seguono la direzione dei piedi; spingi senza bloccare le ginocchia.\nEspira nella spinta, non trattenere il fiato e interrompi se senti pressione o fastidio.",
+          "reps": "8-12",
+          "rest": "2'30\"",
+          "sets": [
+            3,
+            3,
+            4,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-2",
+          "name": "Leg Curl Seduto",
+          "instructions": "Regola il perno in linea con il ginocchio e il rullo appena sopra le caviglie; tieni la schiena allo schienale.\nFletti le ginocchia portando il rullo verso il basso, fai una breve contrazione e torna lentamente.\nEvita strattoni e mantieni il bacino fermo.",
+          "reps": "10-12",
+          "rest": "1'30\"",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-3",
+          "name": "Leg Extension (ultima serie: +2 mini-serie da 4 reps con 15\" di pausa)",
+          "instructions": "Regola il perno in linea con il ginocchio e il rullo sulla parte bassa della tibia; resta seduto con il bacino appoggiato.\nDistendi le ginocchia senza slancio e abbassa il peso lentamente. Nell'ultima serie, dopo le ripetizioni previste, fai 4 ripetizioni, riposa 15 secondi e fai altre 4.\nNon scattare in chiusura e interrompi se compare dolore al ginocchio.",
+          "reps": "12-15",
+          "rest": "1'30\"",
+          "sets": [
+            3,
+            3,
+            3,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-4",
+          "name": "Calf alla Pressa (pausa 2\" in basso)",
+          "instructions": "Appoggia sulle punte dei piedi la parte bassa della pedana, con le ginocchia morbide.\nLascia scendere i talloni in modo controllato, fermati 2 secondi in allungamento e spingi sulle punte.\nNon rimbalzare e non bloccare le ginocchia.",
+          "reps": "10-15",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            4,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-5",
+          "name": "Alzate Laterali Manubri da seduto — pompaggio leggero",
+          "instructions": "Siediti e mantieni il busto fermo, con gomiti leggermente piegati.\nSolleva i manubri lateralmente con un movimento piccolo e controllato, senza slancio; abbassa lentamente.\nUsa un carico leggero e interrompi la serie se perdi il controllo.",
+          "reps": "15-25",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-6",
+          "name": "Core: Dead Bug (espira a ogni rep)",
+          "instructions": "Sdraiati supino con anche e ginocchia piegate; mantieni la schiena in posizione comoda e stabile.\nAllunga lentamente il braccio e la gamba opposti solo fin dove riesci a controllare il tronco; ritorna e alterna.\nEspira durante ogni allungamento senza trattenere il fiato. Se senti pressione o fastidio, fermati.",
+          "reps": "10/lato",
+          "rest": "45\"",
+          "sets": [
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": true,
+          "pair": ""
+        },
+        {
+          "id": "exercise-7",
+          "name": "Tapis Roulant inclinato 5-8%",
+          "instructions": "Imposta un'inclinazione tra 5 e 8% e cammina per 15-20 minuti a un passo sostenibile.\nRegola velocità e pendenza per riuscire a mantenere una respirazione confortevole; non è necessario correre.",
+          "reps": "15-20 min",
+          "rest": "—",
+          "sets": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "kind": "cardio",
+          "unilateral": false,
+          "pair": ""
+        }
+      ]
+    },
+    {
+      "id": "day-3",
+      "name": "Upper B",
+      "subtitle": "Spalle e dorso",
+      "exercises": [
+        {
+          "id": "exercise-1",
+          "name": "Shoulder Press Macchina (schiena adesa)",
+          "instructions": "Regola il sedile in modo che le maniglie partano circa all'altezza delle spalle; appoggia schiena e piedi.\nSpingi verso l'alto senza inarcare la schiena né bloccare bruscamente i gomiti; ritorna lentamente.\nEspira durante la spinta e usa un carico che ti consenta di restare stabile.",
+          "reps": "6-10",
+          "rest": "2'30\"",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-2",
+          "name": "Lat Machine presa neutra larga",
+          "instructions": "Blocca le cosce sotto i cuscinetti e afferra la barra con presa neutra larga; inclina il busto appena indietro.\nPorta i gomiti verso il basso e la barra davanti alla parte alta del petto; risali lentamente senza lasciar sollevare le spalle.\nNon tirare la barra dietro la nuca e non dondolare.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-3",
+          "name": "Chest Press Orizzontale (macchina)",
+          "instructions": "Regola il sedile affinché le maniglie siano all'altezza del petto; mantieni schiena e piedi appoggiati.\nSpingi in avanti senza bloccare di colpo i gomiti, poi torna lentamente finché senti un allungamento comodo.\nEspira mentre spingi e non inarcare la schiena.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-4",
+          "name": "Rematore con petto appoggiato (T-bar / macchina)",
+          "instructions": "Regola il supporto così che il petto resti appoggiato e afferra le maniglie senza incurvare la schiena.\nTira i gomiti indietro senza alzare le spalle; riporta le braccia avanti lentamente.\nEvita slanci del busto e espira durante la tirata.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-5",
+          "name": "Alzate Laterali Cavo Monolaterale (cavo dietro la schiena)",
+          "instructions": "Posizionati di lato al cavo basso, con la maniglia dietro il fianco e una mano libera in appoggio.\nSolleva il braccio lateralmente fino a circa l'altezza della spalla senza inclinare il busto; torna lentamente.\nCompleta un lato e poi l'altro, senza scrollare la spalla.",
+          "reps": "12-15/braccio",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            3,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": true,
+          "pair": ""
+        },
+        {
+          "id": "exercise-6",
+          "name": "Croci ai Cavi dal basso verso l'alto (petto alto)",
+          "instructions": "Metti le carrucole in basso, fai un passo avanti e tieni i gomiti leggermente piegati.\nPorta le mani in avanti e verso l'alto fino davanti alla parte alta del petto; riapri lentamente senza forzare le spalle.\nMantieni il busto fermo e espira mentre chiudi.",
+          "reps": "12-15",
+          "rest": "1'15\"",
+          "sets": [
+            2,
+            2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-7a",
+          "name": "SS stessa panca: French Press sopra la testa con 1 manubrio da seduto",
+          "instructions": "Siediti stabile e tieni un manubrio sopra la testa con entrambe le mani, gomiti rivolti in avanti.\nPiega i gomiti portando il manubrio dietro la testa per un tratto comodo, poi distendili senza inarcare la schiena.\nSe fai la superserie, passa all'hammer curl sulla stessa panca prima del recupero.",
+          "reps": "10-15",
+          "rest": "—",
+          "sets": [
+            2,
+            2,
+            2,
+            2,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": "7"
+        },
+        {
+          "id": "exercise-7b",
+          "name": "SS stessa panca: Hammer Curl Manubri da seduto",
+          "instructions": "Siediti con schiena stabile, braccia lungo i fianchi e palmi rivolti uno verso l'altro.\nFletti i gomiti senza muovere le spalle, poi abbassa i manubri lentamente.\nNella superserie eseguilo dopo la French Press; conta le ripetizioni per ogni braccio.",
+          "reps": "10-15",
+          "rest": "1'15\"",
+          "sets": [
+            2,
+            2,
+            2,
+            2,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": "7"
+        }
+      ]
+    },
+    {
+      "id": "day-4",
+      "name": "Lower B",
+      "subtitle": "Glutei e femorali",
+      "exercises": [
+        {
+          "id": "exercise-1",
+          "name": "Hip Thrust Macchina (espira in salita, pausa 1\" in alto)",
+          "instructions": "Regola il cuscinetto sul bacino e appoggia bene la schiena; piedi a terra circa alla larghezza delle anche.\nSpingi il bacino in alto contraendo i glutei, fermati 1 secondo senza inarcare la schiena e scendi controllato.\nEspira in salita e non trattenere il respiro; fermati se senti pressione o fastidio.",
+          "reps": "8-12",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            4,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-2",
+          "name": "Pressa 45° — piedi alti e larghi (glutei/femorali)",
+          "instructions": "Sistema i piedi alti e un po' più larghi delle anche, con punte leggermente aperte; tieni la schiena aderente allo schienale.\nScendi fin dove il bacino resta fermo e le ginocchia seguono le punte; spingi senza bloccare le ginocchia.\nEspira nella spinta e non trattenere il fiato; interrompi se senti pressione o fastidio.",
+          "reps": "10-15",
+          "rest": "2'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-3",
+          "name": "Leg Curl Sdraiato",
+          "instructions": "Allinea il ginocchio al perno della macchina e posiziona il rullo sopra i talloni; mantieni il bacino appoggiato.\nFletti le ginocchia portando i talloni verso i glutei, poi distendi lentamente senza perdere il controllo.\nEvita di sollevare il bacino o di usare slanci.",
+          "reps": "8-12",
+          "rest": "1'30\"",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-4",
+          "name": "Hyperextension 45° (focus glutei, schiena leggermente arrotondata)",
+          "instructions": "Regola il supporto sotto le anche e mantieni il movimento controllato, senza forzare la schiena.\nFletti il busto solo quanto riesci a controllare; risali contraendo i glutei fino ad allineare il corpo, senza iperestendere.\nEspira in salita senza trattenere il fiato; se avverti pressione o fastidio, interrompi e chiedi indicazione al medico o all'istruttore.",
+          "reps": "10-15",
+          "rest": "1'30\"",
+          "sets": [
+            2,
+            2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-5",
+          "name": "Abductor Machine (busto leggermente in avanti)",
+          "instructions": "Regola la macchina in modo che le ginocchia appoggino ai cuscinetti e siediti con il bacino stabile.\nApri le ginocchia lentamente senza slancio, fai una breve contrazione e richiudile con controllo.\nMantieni il busto fermo e non forzare l'ampiezza.",
+          "reps": "15-20",
+          "rest": "1'",
+          "sets": [
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-6",
+          "name": "Calf Raise da Seduto (pausa 1\" in alto)",
+          "instructions": "Appoggia la parte anteriore dei piedi sulla pedana e posiziona il cuscinetto sopra le cosce, vicino alle ginocchia.\nAbbassa i talloni con controllo, poi sali sulle punte e mantieni 1 secondo in alto.\nEvita rimbalzi e mantieni il movimento fluido.",
+          "reps": "12-15",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            4
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-7",
+          "name": "Reverse Pec Deck",
+          "instructions": "Regola il sedile affinché le maniglie siano circa all'altezza delle spalle e appoggia il petto al supporto.\nApri le braccia portando i gomiti indietro con una lieve flessione; ritorna lentamente senza incurvare la schiena.\nTieni le spalle lontane dalle orecchie e non usare slancio.",
+          "reps": "15-20",
+          "rest": "1'",
+          "sets": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": false,
+          "pair": ""
+        },
+        {
+          "id": "exercise-8",
+          "name": "Core: Pallof Press ai cavi",
+          "instructions": "Posizionati di lato al cavo all'altezza del petto, piedi stabili e maniglia vicino allo sterno.\nSpingi le mani davanti a te senza lasciare ruotare il busto, poi riportale lentamente al petto.\nUsa poca resistenza e respira continuamente; fermati se senti pressione o fastidio.",
+          "reps": "12/lato",
+          "rest": "45\"",
+          "sets": [
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+          ],
+          "kind": "strength",
+          "unilateral": true,
+          "pair": ""
+        },
+        {
+          "id": "exercise-9",
+          "name": "Tapis Roulant inclinato 5-8%",
+          "instructions": "Imposta un'inclinazione tra 5 e 8% e cammina per 15-20 minuti a un passo sostenibile.\nRegola velocità e pendenza per riuscire a mantenere una respirazione confortevole; non è necessario correre.",
+          "reps": "15-20 min",
+          "rest": "—",
+          "sets": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "kind": "cardio",
+          "unilateral": false,
+          "pair": ""
+        }
+      ]
+    }
+  ]
+}
