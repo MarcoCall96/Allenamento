@@ -1,11 +1,11 @@
 "use strict";
 
-const CACHE = "app-palestra-v37";
+const CACHE = "app-palestra-v38";
 const STATIC = [
   "./",
   "./index.html",
-  "./styles.css?v=37",
-  "./app.js?v=37",
+  "./styles.css?v=38",
+  "./app.js?v=38",
   "./scheda-iniziale.json",
   "./assets/illustrazioni/catalogo.json",
   "./manifest.webmanifest",

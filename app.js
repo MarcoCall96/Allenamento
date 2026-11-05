@@ -1104,28 +1104,43 @@
     const root = document.documentElement;
     const portrait = window.innerHeight >= window.innerWidth;
     const screenHeight = Math.max(window.screen.height, window.screen.width);
-    const gap = screenHeight - Math.max(window.innerHeight, window.innerWidth);
     const iphone = /iPhone/.test(navigator.userAgent);
-    // Senza viewport-fit=cover iOS non espone i margini sicuri e la finestra può trovarsi in due stati:
-    // A) sotto la barra di stato (innerHeight più corta dello schermo) -> serve solo lo spazio dell'indicatore Home;
-    // B) a tutto schermo sotto la barra trasparente -> servono anche i margini in alto.
-    const topInset = screenHeight >= 874 ? 62 : screenHeight >= 852 ? 59 : screenHeight >= 812 ? 47 : 20;
-    const bottomInset = screenHeight >= 812 ? 34 : 0;
     let state = "normale";
     if (isStandalone() && iphone && portrait) {
-      if (gap >= topInset * 0.7) {
-        state = "A";
-        root.style.setProperty("--safe-top", "0px");
-      } else {
-        state = "B";
-        root.style.setProperty("--safe-top", `${topInset}px`);
-      }
-      root.style.setProperty("--safe-bottom", `${bottomInset}px`);
+      // iOS 26+: dvh/innerHeight possono essere più corti dello schermo; 100vh no. La shell resta nel flusso normale.
+      root.style.setProperty("--app-height", "100vh");
+      const probe = node("div");
+      probe.style.cssText = "position:absolute;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0";
+      document.body.append(probe);
+      const style = getComputedStyle(probe);
+      const measuredTop = parseFloat(style.paddingTop) || 0;
+      const measuredBottom = parseFloat(style.paddingBottom) || 0;
+      probe.remove();
+      const topInset = screenHeight >= 874 ? 62 : screenHeight >= 852 ? 59 : screenHeight >= 812 ? 47 : 20;
+      const bottomInset = screenHeight >= 812 ? 34 : 0;
+      root.style.setProperty("--safe-top", `${Math.max(measuredTop, topInset)}px`);
+      root.style.setProperty("--safe-bottom", `${Math.max(measuredBottom, bottomInset)}px`);
+      state = measuredTop > 0 ? "cover" : "stimato";
     } else {
       root.style.removeProperty("--safe-bottom");
       root.style.removeProperty("--safe-top");
+      if (!isStandalone()) root.style.removeProperty("--app-height");
     }
     root.dataset.viewportState = state;
+  }
+
+  function syncKeyboard() {
+    const viewport = window.visualViewport;
+    if (!viewport || !isStandalone() || !/iPhone/.test(navigator.userAgent)) return;
+    const keyboardOpen = viewport.height < window.screen.height * 0.75;
+    document.documentElement.style.setProperty("--app-height", keyboardOpen ? `${Math.round(viewport.height)}px` : "100vh");
+    if (keyboardOpen) window.scrollTo(0, 0);
+  }
+
+  function resetScroll() {
+    [0, 16, 50, 100, 200].forEach((delay) => window.setTimeout(() => {
+      if (window.scrollY || (window.visualViewport && window.visualViewport.offsetTop)) window.scrollTo(0, 0);
+    }, delay));
   }
 
   function diagnosticsCard() {
@@ -2577,12 +2592,18 @@
     });
     window.addEventListener("orientationchange", () => window.setTimeout(fitViewport, 250));
     window.addEventListener("pageshow", fitViewport);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncKeyboard);
+      window.visualViewport.addEventListener("scroll", resetScroll);
+    }
+    document.addEventListener("focusin", resetScroll);
     document.addEventListener("focusout", () => {
+      resetScroll();
       window.setTimeout(() => {
         const active = document.activeElement;
         if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
         fitViewport();
-        if (window.scrollY || (window.visualViewport && window.visualViewport.offsetTop)) window.scrollTo(0, 0);
+        syncKeyboard();
       }, 400);
     });
     restTimerToggle.addEventListener("click", toggleRestTimer);
