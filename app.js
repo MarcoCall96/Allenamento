@@ -613,6 +613,13 @@
     });
     bottom.append(done);
     sheet.append(top, scroll, bottom);
+    onHorizontalSwipe(sheet, { onRight: closeExerciseSheet, edgeOnly: true });
+    onHorizontalSwipe(sheet, {
+      skipEdge: true,
+      ignore: ".series-table, .exercise-gallery, input, textarea, .optional-fields, .history-panel",
+      onLeft: () => { if (index + 1 < exercises.length) openExercise(index + 1); },
+      onRight: () => { if (index > 0) openExercise(index - 1); },
+    });
     document.querySelector(".app-shell").append(sheet);
     activeSheet = sheet;
     updateRestTimerUI();
@@ -1096,17 +1103,29 @@
   function fitViewport() {
     const root = document.documentElement;
     const portrait = window.innerHeight >= window.innerWidth;
-    const gap = Math.max(window.screen.height, window.screen.width) - Math.max(window.innerHeight, window.innerWidth);
+    const screenHeight = Math.max(window.screen.height, window.screen.width);
+    const gap = screenHeight - Math.max(window.innerHeight, window.innerWidth);
     const iphone = /iPhone/.test(navigator.userAgent);
-    // Senza viewport-fit=cover iOS non espone i margini sicuri: se la finestra installata è più corta
-    // dello schermo, riserviamo lo spazio dell'indicatore Home in basso.
-    if (isStandalone() && iphone && portrait && gap >= 40) {
-      root.style.setProperty("--safe-bottom", "34px");
-      root.style.setProperty("--safe-top", "0px");
+    // Senza viewport-fit=cover iOS non espone i margini sicuri e la finestra può trovarsi in due stati:
+    // A) sotto la barra di stato (innerHeight più corta dello schermo) -> serve solo lo spazio dell'indicatore Home;
+    // B) a tutto schermo sotto la barra trasparente -> servono anche i margini in alto.
+    const topInset = screenHeight >= 874 ? 62 : screenHeight >= 852 ? 59 : screenHeight >= 812 ? 47 : 20;
+    const bottomInset = screenHeight >= 812 ? 34 : 0;
+    let state = "normale";
+    if (isStandalone() && iphone && portrait) {
+      if (gap >= topInset * 0.7) {
+        state = "A";
+        root.style.setProperty("--safe-top", "0px");
+      } else {
+        state = "B";
+        root.style.setProperty("--safe-top", `${topInset}px`);
+      }
+      root.style.setProperty("--safe-bottom", `${bottomInset}px`);
     } else {
       root.style.removeProperty("--safe-bottom");
       root.style.removeProperty("--safe-top");
     }
+    root.dataset.viewportState = state;
   }
 
   function diagnosticsCard() {
@@ -1132,7 +1151,7 @@
       `Altezza usata: ${document.documentElement.clientHeight}px (100vh: ${probeVh}px)`,
       `Margini applicati (alto/basso): ${getComputedStyle(document.documentElement).getPropertyValue("--safe-top").trim() || "env"} / ${getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom").trim() || "env"}`,
       `Margini sicuri (alto/dx/basso/sx): ${insets}`,
-      `Installata (standalone): ${isStandalone() ? "sì" : "no"}`,
+      `Installata (standalone): ${isStandalone() ? "sì" : "no"} · stato ${document.documentElement.dataset.viewportState || "n.d."}`,
       `Sistema: ${(navigator.userAgent.match(/(?:iPhone )?OS [\d_]+|Android [\d.]+/) || ["n.d."])[0]}`,
     ];
     const card = node("div", "info-card");
@@ -1379,6 +1398,17 @@
     view.append(reminder);
   }
 
+  function stepDay(direction) {
+    if (currentScreen !== "workout") return;
+    const plan = activePlan();
+    const index = plan.days.findIndex((item) => item.id === state.selection.dayId) + direction;
+    if (index < 0 || index >= plan.days.length) return;
+    state.selection.dayId = plan.days[index].id;
+    persist();
+    renderWorkout();
+    scrollContent.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   function renderWorkout() {
     ensureSelection();
     const plan = activePlan();
@@ -1562,28 +1592,29 @@
       row.style.transform = `translateX(${value}px)`;
       offset = value;
     };
-    row.addEventListener("pointerdown", (event) => {
-      startX = event.clientX;
-      startY = event.clientY;
+    const begin = (x, y) => {
+      startX = x;
+      startY = y;
       base = open ? -width : 0;
       dragging = true;
       decided = false;
-    });
-    row.addEventListener("pointermove", (event) => {
-      if (!dragging) return;
-      const dx = event.clientX - startX;
-      const dy = event.clientY - startY;
+    };
+    // Restituisce true quando il gesto è orizzontale e deve bloccare lo scorrimento della pagina.
+    const track = (x, y) => {
+      if (!dragging) return false;
+      const dx = x - startX;
+      const dy = y - startY;
       if (!decided) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return false;
         decided = true;
         if (Math.abs(dy) > Math.abs(dx)) {
           dragging = false;
-          return;
+          return false;
         }
-        if (row.setPointerCapture) row.setPointerCapture(event.pointerId);
       }
       move(Math.min(0, Math.max(-width, base + dx)), false);
-    });
+      return true;
+    };
     const finish = () => {
       if (!dragging) return;
       dragging = false;
@@ -1591,10 +1622,58 @@
       open = offset < -width / 2;
       move(open ? -width : 0, true);
     };
-    row.addEventListener("pointerup", finish);
-    row.addEventListener("pointercancel", finish);
+    row.addEventListener("touchstart", (event) => begin(event.touches[0].clientX, event.touches[0].clientY), { passive: true });
+    row.addEventListener("touchmove", (event) => {
+      if (track(event.touches[0].clientX, event.touches[0].clientY) && event.cancelable) event.preventDefault();
+    }, { passive: false });
+    row.addEventListener("touchend", finish);
+    row.addEventListener("touchcancel", finish);
+    row.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "touch") return;
+      begin(event.clientX, event.clientY);
+    });
+    row.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch") return;
+      if (track(event.clientX, event.clientY) && row.setPointerCapture) row.setPointerCapture(event.pointerId);
+    });
+    row.addEventListener("pointerup", (event) => { if (event.pointerType !== "touch") finish(); });
+    row.addEventListener("pointercancel", (event) => { if (event.pointerType !== "touch") finish(); });
     wrap.append(remove, row);
     return wrap;
+  }
+
+  // Gesto orizzontale generico: chiama onLeft / onRight quando lo spostamento è chiaro e prevalente.
+  function onHorizontalSwipe(element, { onLeft, onRight, edgeOnly = false, skipEdge = false, ignore = "" }) {
+    let startX = 0;
+    let startY = 0;
+    let active = false;
+    element.addEventListener("touchstart", (event) => {
+      const touch = event.touches[0];
+      active = event.touches.length === 1 &&
+        (!edgeOnly || touch.clientX < 28) &&
+        (!skipEdge || touch.clientX >= 28) &&
+        !(ignore && event.target.closest && event.target.closest(ignore));
+      startX = touch.clientX;
+      startY = touch.clientY;
+    }, { passive: true });
+    element.addEventListener("touchmove", (event) => {
+      if (!active || !event.cancelable) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) event.preventDefault();
+    }, { passive: false });
+    element.addEventListener("touchend", (event) => {
+      if (!active) return;
+      active = false;
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+      if (dx > 0 && onRight) onRight();
+      if (dx < 0 && onLeft) onLeft();
+    });
+    element.addEventListener("touchcancel", () => { active = false; });
   }
 
   function exerciseCard(plan, day, week, exercise, updateCount, openSheet) {
@@ -2489,13 +2568,23 @@
     await loadIllustrations();
     navButtons.forEach((nav) => nav.addEventListener("click", () => setScreen(nav.dataset.screen)));
     fitViewport();
+    window.setTimeout(fitViewport, 600);
+    window.addEventListener("load", () => window.setTimeout(fitViewport, 300));
+    onHorizontalSwipe(views.workout, {
+      ignore: ".day-strip, .exercise-gallery, input, textarea, .series-swipe, .week-control",
+      onLeft: () => stepDay(1),
+      onRight: () => stepDay(-1),
+    });
     window.addEventListener("orientationchange", () => window.setTimeout(fitViewport, 250));
     window.addEventListener("pageshow", fitViewport);
-    document.addEventListener("focusout", () => window.setTimeout(() => {
-      const active = document.activeElement;
-      if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
-      if (window.scrollY || (window.visualViewport && window.visualViewport.offsetTop)) window.scrollTo(0, 0);
-    }, 60));
+    document.addEventListener("focusout", () => {
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+        fitViewport();
+        if (window.scrollY || (window.visualViewport && window.visualViewport.offsetTop)) window.scrollTo(0, 0);
+      }, 400);
+    });
     restTimerToggle.addEventListener("click", toggleRestTimer);
     restTimerReset.addEventListener("click", resetRestTimer);
     document.getElementById("rest-timer-back").addEventListener("click", () => adjustRestTimer(-10));
