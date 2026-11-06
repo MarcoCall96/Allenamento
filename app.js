@@ -318,8 +318,11 @@
     for (const nav of navButtons) {
       const selected = nav.dataset.screen === screen;
       nav.classList.toggle("is-active", selected);
-      if (selected) nav.setAttribute("aria-current", "page");
-      else nav.removeAttribute("aria-current");
+      if (selected) {
+        nav.setAttribute("aria-current", "page");
+        const bar = nav.closest(".bottom-nav");
+        if (bar) bar.style.setProperty("--nav-i", String(navButtons.indexOf(nav)));
+      } else nav.removeAttribute("aria-current");
     }
     clearNotice();
     if (screen === "home") renderHome();
@@ -327,6 +330,7 @@
     if (screen === "plan") renderPlan();
     if (screen === "history") renderHistory();
     if (screen === "more") renderMore();
+    keepScreenAwake(screen === "workout");
     scrollContent.scrollTo({ top: 0, behavior: "auto" });
   }
 
@@ -638,16 +642,23 @@
       const y = baseline - value / maximum * (baseline - top);
       return { x, y, value, week: index + 1 };
     });
-    const linePath = points.map((point, index) =>
-      `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
-    const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseline} ` +
-      `L ${points[0].x} ${baseline} Z`;
+    const segments = [];
+    let segment = [];
+    points.forEach((point) => {
+      if (point.value > 0) segment.push(point);
+      else if (segment.length) {
+        segments.push(segment);
+        segment = [];
+      }
+    });
+    if (segment.length) segments.push(segment);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.setAttribute("width", String(width));
     svg.setAttribute("height", String(height));
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Volume registrato per settimana, in chilogrammi per ripetizioni.");
+    svg.setAttribute("aria-label",
+      "Volume registrato per settimana, in chilogrammi per ripetizioni. Le settimane senza dati non sono rappresentate.");
     const defs = document.createElementNS(svg.namespaceURI, "defs");
     const gradient = document.createElementNS(svg.namespaceURI, "linearGradient");
     gradient.id = "volume-fill-gradient";
@@ -655,7 +666,7 @@
     gradient.setAttribute("y1", "0");
     gradient.setAttribute("x2", "0");
     gradient.setAttribute("y2", "1");
-    [["0%", "#61e1d3", ".38"], ["100%", "#61e1d3", "0"]].forEach(([offset, color, opacity]) => {
+    [["0%", "#c6f135", ".3"], ["100%", "#c6f135", "0"]].forEach(([offset, color, opacity]) => {
       const stop = document.createElementNS(svg.namespaceURI, "stop");
       stop.setAttribute("offset", offset);
       stop.setAttribute("stop-color", color);
@@ -673,24 +684,41 @@
       grid.setAttribute("class", "volume-gridline");
       svg.append(grid);
     });
-    const area = document.createElementNS(svg.namespaceURI, "path");
-    area.setAttribute("d", areaPath);
-    area.setAttribute("fill", "url(#volume-fill-gradient)");
-    svg.append(area);
-    const line = document.createElementNS(svg.namespaceURI, "path");
-    line.setAttribute("d", linePath);
-    line.setAttribute("class", "volume-line");
-    svg.append(line);
+    segments.forEach((recorded) => {
+      if (recorded.length === 1) {
+        const stem = document.createElementNS(svg.namespaceURI, "line");
+        stem.setAttribute("x1", String(recorded[0].x));
+        stem.setAttribute("x2", String(recorded[0].x));
+        stem.setAttribute("y1", String(recorded[0].y));
+        stem.setAttribute("y2", String(baseline));
+        stem.setAttribute("class", "volume-stem");
+        svg.append(stem);
+        return;
+      }
+      const linePath = recorded.map((point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+      const area = document.createElementNS(svg.namespaceURI, "path");
+      area.setAttribute("d", `${linePath} L ${recorded[recorded.length - 1].x} ${baseline} ` +
+        `L ${recorded[0].x} ${baseline} Z`);
+      area.setAttribute("fill", "url(#volume-fill-gradient)");
+      svg.append(area);
+      const line = document.createElementNS(svg.namespaceURI, "path");
+      line.setAttribute("d", linePath);
+      line.setAttribute("class", "volume-line");
+      svg.append(line);
+    });
     points.forEach((point) => {
-      const dot = document.createElementNS(svg.namespaceURI, "circle");
-      dot.setAttribute("cx", String(point.x));
-      dot.setAttribute("cy", String(point.y));
-      dot.setAttribute("r", point.week === selectedWeek ? "5" : "3.5");
-      dot.setAttribute("class", `volume-dot${point.week === selectedWeek ? " is-current" : ""}`);
-      const title = document.createElementNS(svg.namespaceURI, "title");
-      title.textContent = `Settimana ${point.week}: ${point.value.toLocaleString("it-IT")} kg × rip.`;
-      dot.append(title);
-      svg.append(dot);
+      if (point.value > 0) {
+        const dot = document.createElementNS(svg.namespaceURI, "circle");
+        dot.setAttribute("cx", String(point.x));
+        dot.setAttribute("cy", String(point.y));
+        dot.setAttribute("r", point.week === selectedWeek ? "5" : "3.5");
+        dot.setAttribute("class", `volume-dot${point.week === selectedWeek ? " is-current" : ""}`);
+        const title = document.createElementNS(svg.namespaceURI, "title");
+        title.textContent = `Settimana ${point.week}: ${point.value.toLocaleString("it-IT")} kg × rip.`;
+        dot.append(title);
+        svg.append(dot);
+      }
       const label = document.createElementNS(svg.namespaceURI, "text");
       label.setAttribute("x", String(point.x));
       label.setAttribute("y", "140");
@@ -966,16 +994,22 @@
         const currentValue = node("strong", "", formatNumber(last.kg, 1));
         currentValue.append(node("small", "", " kg"));
         current.append(node("span", "", "ULTIMO PESO"), currentValue);
-        const change = last.kg - entries[0].kg;
         const changeBox = node("div", "volume-stat");
-        const changeValue = node("strong", "", `${change > 0 ? "+" : ""}${formatNumber(change, 1)}`);
-        changeValue.append(node("small", "", " kg"));
+        const change = last.kg - entries[0].kg;
+        const changeValue = node("strong", "", entries.length > 1
+          ? `${change > 0 ? "+" : ""}${formatNumber(change, 1)}` : "—");
+        if (entries.length > 1) changeValue.append(node("small", "", "kg"));
         changeBox.append(node("span", "", "VARIAZIONE"), changeValue);
         stats.append(current, changeBox);
         card.append(stats);
-        const wrap = node("div", "volume-chart-wrap");
-        wrap.append(weightChart(entries));
-        card.append(wrap);
+        if (entries.length > 1) {
+          const wrap = node("div", "volume-chart-wrap");
+          wrap.append(weightChart(entries));
+          card.append(wrap);
+        } else {
+          card.append(node("p", "volume-empty",
+            "Prima misurazione registrata. Aggiungine un'altra per vedere l'andamento."));
+        }
       } else {
         card.append(node("p", "volume-empty", "Registra il tuo peso per vedere il grafico dell'andamento."));
       }
@@ -1098,6 +1132,32 @@
   function isStandalone() {
     return window.navigator.standalone === true ||
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  }
+
+  const DAILY_QUOTES = [
+    "💪 Un set alla volta.",
+    "🔥 La costanza batte il talento.",
+    "🚀 Oggi meglio di ieri.",
+    "🏋️ Peso giusto, tecnica pulita.",
+    "⚡ Ogni ripetizione conta.",
+    "🎯 Concentrati sulla prossima serie.",
+    "🌟 Piccoli passi, grandi risultati.",
+    "💧 Bevi, respira, sei sul pezzo.",
+    "🧠 La testa decide, il corpo segue.",
+    "🏆 Il progresso vive nei dettagli.",
+    "😤 Ancora una ripetizione pulita.",
+    "🌙 Recupero e sonno fanno crescere.",
+    "✨ Il tuo yo di domani ti ringrazia.",
+    "🔋 Energia alta, testa libera.",
+    "🥇 Non devi essere perfetto, solo presente.",
+  ];
+
+  function showDailyQuote() {
+    const target = document.getElementById("daily-quote");
+    if (!target) return;
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    target.textContent = DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
   }
 
   function fitViewport() {
@@ -1371,13 +1431,15 @@
     blockVolume.append(node("span", "", "TOTALE BLOCCO"), blockValue);
     volumeStats.append(currentVolume, blockVolume);
     volumeCard.append(volumeStats);
-    const volumeChartWrap = node("div", "volume-chart-wrap");
-    volumeChartWrap.append(volumeChart(volumeValues, week));
-    volumeCard.append(volumeChartWrap);
-    volumeCard.append(node("p", "hint volume-note",
-      "Stima basata su peso × ripetizioni inseriti; per gli esercizi unilaterali somma entrambi i lati."));
     if (totalVolume === 0) {
-      volumeCard.append(node("p", "volume-empty", "Inserisci i pesi e le ripetizioni per vedere il grafico dei progressi."));
+      volumeCard.append(node("p", "volume-empty",
+        "Nessun volume registrato. Aggiungi pesi e ripetizioni durante l'allenamento per vedere l'andamento."));
+    } else {
+      const volumeChartWrap = node("div", "volume-chart-wrap");
+      volumeChartWrap.append(volumeChart(volumeValues, week));
+      volumeCard.append(volumeChartWrap);
+      volumeCard.append(node("p", "hint volume-note",
+        "Stima basata su peso × ripetizioni inseriti; per gli esercizi unilaterali somma entrambi i lati."));
     }
     view.append(volumeCard);
 
@@ -1398,7 +1460,12 @@
       column.append(track, node("span", "", `S${number}`));
       bars.append(column);
     }
-    weekly.append(bars);
+    if (volumeValues.some((_, index) => weekProgress(plan, index + 1).completed > 0)) {
+      weekly.append(bars);
+    } else {
+      weekly.append(node("p", "volume-empty",
+        "Nessuna giornata completata. Le settimane appariranno qui dopo il primo allenamento."));
+    }
     view.append(weekly);
 
     const reminder = node("div", "info-card");
@@ -1441,7 +1508,7 @@
 
     const heading = node("div", "section-heading workout-heading");
     const headingText = node("div");
-    headingText.append(node("h1", "page-title", "Allenamento"), node("p", "", "Scegli settimana e giornata"));
+    headingText.append(node("h1", "page-title", "Allenamento"), node("p", "", "Scegli il giorno"));
     const weekControl = node("div", "week-control");
     const previous = button("‹", "icon-button", () => {
       state.selection.week -= 1;
@@ -1457,7 +1524,9 @@
     });
     next.disabled = week === plan.weeks;
     next.setAttribute("aria-label", "Settimana successiva");
-    weekControl.append(previous, node("span", "week-label", `S${week} / ${plan.weeks}`), next);
+    const weekLabel = node("span", "week-label");
+    weekLabel.append(node("small", "", "SETT."), node("b", "", `${week}/${plan.weeks}`));
+    weekControl.append(previous, weekLabel, next);
     heading.append(headingText, weekControl);
     view.append(heading);
     view.append(dayStrip(plan.days, day.id, (id) => {
@@ -2354,8 +2423,19 @@
     return card;
   }
 
-  function exportFile(filename, contents) {
+  async function exportFile(filename, contents) {
     const blob = new Blob([contents], { type: "application/json" });
+    // Su iPhone il foglio di condivisione permette di salvare nell'app File senza anteprima intermedia.
+    try {
+      const file = new File([blob], filename, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Backup allenamento" });
+        return true;
+      }
+    } catch (error) {
+      if (error && error.name === "AbortError") return false;
+      console.error("Condivisione non riuscita, uso il download:", error);
+    }
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -2364,12 +2444,30 @@
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return true;
   }
 
-  function exportBackup() {
+  async function exportBackup() {
     const payload = { format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), data: state };
-    exportFile("backup-allenamento.json", JSON.stringify(payload, null, 2));
-    showNotice("Backup preparato. Salvalo nell'app File del tuo dispositivo.");
+    const done = await exportFile("backup-allenamento.json", JSON.stringify(payload, null, 2));
+    if (done) showNotice("Backup pronto. Salvalo nell'app File del tuo dispositivo.");
+  }
+
+  let wakeLock = null;
+
+  async function keepScreenAwake(enable) {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      if (enable && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+      } else if (!enable && wakeLock) {
+        await wakeLock.release();
+        wakeLock = null;
+      }
+    } catch (error) {
+      console.error("Schermo sempre acceso non disponibile:", error);
+    }
   }
 
   async function restoreBackup(file) {
@@ -2426,7 +2524,7 @@
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json,application/json";
-    input.className = "file-input";
+    input.className = "file-input sr-only";
     input.id = `input-${++fieldCounter}`;
     label.htmlFor = input.id;
     input.addEventListener("change", () => {
@@ -2434,7 +2532,9 @@
       restoreBackup(selected);
       input.value = "";
     });
-    card.append(label, input);
+    const picker = node("label", "backup-picker-label", "Scegli file di backup");
+    picker.htmlFor = input.id;
+    card.append(label, input, picker);
     return card;
   }
 
@@ -2532,6 +2632,7 @@
   }
 
   async function start() {
+    showDailyQuote();
     fitViewport();
     let raw = null;
     let basePlanLoadFailed = false;
@@ -2606,6 +2707,10 @@
         syncKeyboard();
       }, 400);
     });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && currentScreen === "workout") keepScreenAwake(true);
+    });
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
     restTimerToggle.addEventListener("click", toggleRestTimer);
     restTimerReset.addEventListener("click", resetRestTimer);
     document.getElementById("rest-timer-back").addEventListener("click", () => adjustRestTimer(-10));

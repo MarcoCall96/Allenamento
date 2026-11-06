@@ -142,6 +142,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .volume-chart-wrap svg { display: block; max-width: none; }
 .volume-gridline { stroke: rgba(168, 204, 194, .13); stroke-width: 1; }
 .volume-line { fill: none; stroke: #c6f135; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.volume-stem { stroke: rgba(198, 241, 53, .58); stroke-width: 3; stroke-linecap: round; }
 .volume-dot { fill: #c6f135; stroke: #18200a; stroke-width: 2; }
 .volume-dot.is-current { fill: #f1fcc4; stroke: #c6f135; stroke-width: 2.5; }
 .volume-week-label { fill: #aaa; font-size: 10px; font-family: inherit; }
