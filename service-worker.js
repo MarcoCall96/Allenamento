@@ -1,18 +1,20 @@
 "use strict";
 
-const CACHE = "app-palestra-v42";
+const CACHE = "app-palestra-v57";
 const STATIC = [
   "./",
   "./index.html",
-  "./styles.css?v=42",
-  "./liquid-glass.css?v=42",
-  "./app.js?v=42",
+  "./styles.css?v=57",
+  "./liquid-glass.css?v=57",
+  "./app.js?v=57",
   "./scheda-iniziale.json",
   "./assets/illustrazioni/catalogo.json",
   "./manifest.webmanifest",
   "./assets/apple-touch-icon.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
+  "./assets/fonts/space-grotesk-latin-wght-normal.woff2",
+  "./assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2",
 ];
 
 self.addEventListener("install", (event) => {

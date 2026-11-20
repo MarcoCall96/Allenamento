@@ -203,6 +203,27 @@
     return result;
   }
 
+  const ICONS = {
+    steps: '<path d="M7.2 14.5c1.8-1 2.8-3.1 3.2-5.3.2-1.6-.4-2.6-1.7-2.6-1.5 0-2.3 1.4-2.8 3.1-.6 2-1.7 2.4-2.2 3.6-.9 2.2.9 4.5 3.5 4.1l2.2-.5m7.4-5c-1.8-1-2.8-3.1-3.2-5.3-.2-1.6.4-2.6 1.7-2.6 1.5 0 2.3 1.4 2.8 3.1.6 2 1.7 2.4 2.2 3.6.9 2.2-.9 4.5-3.5 4.1l-2.2-.5M8 20h8"/>',
+    water: '<path d="M12 2.7C9.2 6.7 5.2 10.6 5.2 14.6a6.8 6.8 0 0 0 13.6 0c0-4-4-7.9-6.8-11.9Z"/><path d="M8.8 15.1c.2 1.6 1.2 2.6 2.6 2.9"/>',
+    weight: '<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M8 10a4 4 0 0 1 8 0m-4 0 1.5-2"/>',
+    supplement: '<path d="m8 4 12 12a5.7 5.7 0 0 1-8 8L4 16a5.7 5.7 0 0 1 8-8Zm2 14 8-8" transform="translate(-1 -2)"/>',
+    history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    settings: '<path d="M9.8 3h4.4l.5 2.1 1.8.8 1.9-1.1 3.1 3.1-1.1 1.9.8 1.8 2.1.5v4.4l-2.1.5-.8 1.8 1.1 1.9-3.1 3.1-1.9-1.1-1.8.8-.5 2.1H9.8l-.5-2.1-1.8-.8-1.9 1.1-3.1-3.1 1.1-1.9-.8-1.8-2.1-.5v-4.4l2.1-.5.8-1.8-1.1-1.9 3.1-3.1 1.9 1.1 1.8-.8.5-2.1Z" transform="translate(0 -1.5) scale(1 .96)"/><circle cx="12" cy="12" r="3"/>',
+    close: '<path d="M5 5 19 19M19 5 5 19"/>',
+    chevron: '<path d="m9 5 7 7-7 7"/>',
+    camera: '<path d="M4 7h3l1.5-2h7L17 7h3v12H4Z"/><circle cx="12" cy="13" r="3"/>',
+    backup: '<path d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+  };
+  function icon(name, size = 22) {
+    const svg = svgNode("svg", { viewBox: "0 0 24 24", width: size, height: size,
+      fill: "none", stroke: "currentColor", "stroke-width": 1.8,
+      "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" });
+    svg.innerHTML = ICONS[name];
+    return svg;
+  }
+
   function validateState(candidate) {
     if (!isObject(candidate) || candidate.version !== 1 ||
         !Array.isArray(candidate.plans) || candidate.plans.length < 1 ||
@@ -220,6 +241,17 @@
       return "I dati di passi, acqua, peso o integratori non sono validi.";
     }
     const ids = new Set();
+    if (candidate.exerciseNotes !== undefined &&
+        (!isObject(candidate.exerciseNotes) || Object.keys(candidate.exerciseNotes).length > 500 ||
+          !Object.entries(candidate.exerciseNotes).every(([name, text]) => shortText(name, 200) && shortText(text, 300, true)))) {
+      return "Le note degli esercizi non sono valide.";
+    }
+    if (candidate.sessions !== undefined &&
+        (!isObject(candidate.sessions) || Object.keys(candidate.sessions).length > 3000 ||
+          !Object.values(candidate.sessions).every((item) => isObject(item) && shortText(item.start, 50) &&
+            (item.end === undefined || shortText(item.end, 50))))) {
+      return "I dati delle sedute non sono validi.";
+    }
     for (const plan of candidate.plans) {
       const error = validatePlan(plan);
       if (error || ids.has(plan.id)) return error || "Ci sono blocchi duplicati.";
@@ -305,6 +337,36 @@
     return value === "-" ? "non indicato" : value;
   }
 
+  // Indicazioni di carico dalla scheda; i multiarticolari sono riconosciuti dal recupero lungo (>= 2').
+  function coachingTip(plan, week, exercise, sets) {
+    const text = String(exercise.reps || "").trim();
+    const side = /braccio/i.test(text) ? " per braccio" : (/lato/i.test(text) || exercise.unilateral ? " per lato" : "");
+    const range = text.match(/^(\d+)\s*[-–]\s*(\d+)/);
+    const single = text.match(/^(\d+)/);
+    if (exercise.kind === "cardio") {
+      return range ? [`Resta tra ${range[1]} e ${range[2]} minuti a ritmo facile: devi riuscire a parlare senza fiatone.`] : [];
+    }
+    if (!range && !single) return [];
+    const lines = [];
+    const count = sets ? `${sets} ${sets === 1 ? "serie" : "serie"}` : "";
+    if (range) {
+      lines.push(`Fai ${count}${side}. Cerca di stare tra le ${range[1]} e le ${range[2]} ripetizioni.`);
+    } else {
+      lines.push(`Fai ${count}${side} da ${single[1]} ripetizioni, lente e controllate.`);
+    }
+    const kind = parseRestSeconds(exercise.rest) >= 120 ? "multi" : "iso";
+    const rir = plan.rir && plan.rir[kind] ? String(plan.rir[kind][week - 1] || "") : "";
+    if (rir && rir !== "-") {
+      lines.push(/^0/.test(rir)
+        ? `Porta la serie quasi a cedimento: ${rir} ripetizioni in riserva (RIR ${rir}), sempre con tecnica pulita.`
+        : `Fermati quando te ne restano circa ${rir} in riserva (RIR ${rir}).`);
+    }
+    if (range) {
+      lines.push(`Se in tutte le serie arrivi a ${range[2]} con tecnica pulita, aumenta di poco il carico alla prossima seduta. Se non arrivi a ${range[1]}, scalalo un po'.`);
+    }
+    return lines;
+  }
+
   function setScreen(screen) {
     if (screen !== currentScreen && currentScreen === "plan" && editorDirty) {
       if (!window.confirm("Ci sono modifiche non salvate. Vuoi uscire senza salvarle?")) return;
@@ -315,6 +377,7 @@
     for (const [name, view] of Object.entries(views)) view.hidden = name !== screen;
     restTimerDock.hidden = true;
     closeExerciseSheet();
+    closeHealthSheet();
     for (const nav of navButtons) {
       const selected = nav.dataset.screen === screen;
       nav.classList.toggle("is-active", selected);
@@ -332,7 +395,20 @@
     if (screen === "more") renderMore();
     keepScreenAwake(screen === "workout");
     scrollContent.scrollTo({ top: 0, behavior: "auto" });
+    syncTopbar();
   }
+
+  function syncTopbar() {
+    const heading = document.getElementById("topbar-title");
+    const compact = scrollContent.scrollTop > 28;
+    document.querySelector(".topbar").classList.toggle("is-scrolled", compact);
+    document.querySelector(".topbar").classList.toggle("is-home", currentScreen === "home");
+    heading.textContent = currentScreen === "home" ? "Riepilogo" :
+      currentScreen === "workout" ? "Allenamento" :
+      currentScreen === "history" ? "Storico" :
+      currentScreen === "more" ? "Altro" : "Modifica scheda";
+  }
+  scrollContent.addEventListener("scroll", syncTopbar, { passive: true });
 
   function titleBlock(kicker, title, copy) {
     const result = node("div", "page-header");
@@ -391,6 +467,82 @@
     const count = exercise.sets[week - 1];
     return count > 0 && record.series.length >= count &&
       record.series.slice(0, count).every((set) => completeSet(set, exercise.unilateral));
+  }
+
+  function setScore(set, unilateral) {
+    if (!completeSet(set, unilateral)) return null;
+    const load = Number(String(set.load || "").replace(",", "."));
+    const reps = unilateral ? Math.min(Number(set.left), Number(set.right)) : Number(set.reps);
+    if (!(load > 0) || !(reps > 0)) return null;
+    return { load, e1rm: load * (1 + Math.min(reps, 15) / 30) };
+  }
+
+  function bestOfSeries(series, unilateral) {
+    const best = { load: 0, e1rm: 0 };
+    for (const set of series || []) {
+      const score = setScore(set, unilateral);
+      if (!score) continue;
+      best.load = Math.max(best.load, score.load);
+      best.e1rm = Math.max(best.e1rm, score.e1rm);
+    }
+    return best;
+  }
+
+  // Record personale: carico massimo o massimale stimato superiori a tutte le sedute precedenti dello stesso esercizio.
+  function exercisePR(exercise, key, series) {
+    if (exercise.kind === "cardio" || !Array.isArray(series)) return null;
+    const now = bestOfSeries(series, exercise.unilateral);
+    if (!now.e1rm) return null;
+    const prior = { load: 0, e1rm: 0 };
+    for (const [otherKey, record] of Object.entries(state.records)) {
+      if (otherKey === key || !Array.isArray(record.series) || record.exerciseName !== exercise.name) continue;
+      const best = bestOfSeries(record.series, exercise.unilateral);
+      prior.load = Math.max(prior.load, best.load);
+      prior.e1rm = Math.max(prior.e1rm, best.e1rm);
+    }
+    if (!prior.e1rm) return null;
+    const load = now.load > prior.load + 1e-9;
+    const strength = now.e1rm > prior.e1rm * 1.005;
+    return load || strength ? { load, now, prior } : null;
+  }
+
+  function sessionKey(plan, day, week) {
+    return `${plan.id}|${day.id}|${week}`;
+  }
+
+  function touchSession(plan, day, week) {
+    if (!isObject(state.sessions)) state.sessions = {};
+    const now = new Date();
+    const key = sessionKey(plan, day, week);
+    const current = state.sessions[key];
+    const gap = current && current.end ? now - Date.parse(current.end) : 0;
+    if (!current || gap > 3 * 3600 * 1000) state.sessions[key] = { start: now.toISOString() };
+    state.sessions[key].end = now.toISOString();
+  }
+
+  function sessionStats(plan, day, week, exercises) {
+    const stats = { exercisesDone: 0, total: exercises.length, setsDone: 0, volume: 0, prs: [], minutes: null };
+    for (const exercise of exercises) {
+      const key = recordKey(plan.id, day.id, week, exercise.id);
+      if (recordIsComplete(plan, day, week, exercise)) stats.exercisesDone += 1;
+      const record = state.records[key];
+      if (!record || exercise.kind === "cardio" || !Array.isArray(record.series)) continue;
+      for (const set of record.series) {
+        if (!completeSet(set, exercise.unilateral)) continue;
+        stats.setsDone += 1;
+        const load = Number(String(set.load || "").replace(",", "."));
+        const reps = exercise.unilateral ? Number(set.left) + Number(set.right) : Number(set.reps);
+        if (load > 0 && reps > 0) stats.volume += load * reps;
+      }
+      const pr = exercisePR(exercise, key, record.series);
+      if (pr) stats.prs.push({ name: exercise.name, ...pr });
+    }
+    const session = isObject(state.sessions) ? state.sessions[sessionKey(plan, day, week)] : null;
+    if (session && session.start) {
+      const minutes = Math.round((Date.parse(session.end || session.start) - Date.parse(session.start)) / 60000);
+      if (minutes > 0 && minutes < 600) stats.minutes = minutes;
+    }
+    return stats;
   }
 
   function dayProgress(plan, day, week) {
@@ -453,13 +605,18 @@
     const remaining = active
       ? (active.running ? Math.max(0, Math.ceil((active.endsAt - Date.now()) / 1000)) : active.remaining)
       : duration;
+    restTimerDock.style.setProperty("--timer-ratio", String(duration ? Math.max(0, Math.min(1, remaining / duration)) : 0));
     restTimerValue.textContent = duration ? formatTimer(remaining) : "--:--";
     restTimerStatus.textContent = active
-      ? (active.running ? active.name : (active.finished ? "Recupero terminato" : "Timer in pausa"))
-      : (display ? display.name : "Seleziona un esercizio");
+      ? (active.running ? "In corso" : (active.finished ? "Terminato" : "In pausa"))
+      : "Pronto";
+    restTimerDock.dataset.state = active ? (active.running ? "running" : (active.finished ? "finished" : "paused")) : "idle";
+    restTimerDock.dataset.urgent = active && active.running && remaining <= 10 ? "1" : "0";
+    const timerLabel = restTimerDock.querySelector(".rest-timer-label");
+    if (timerLabel) timerLabel.textContent = active && active.finished ? "TERMINATO" : "RECUPERO";
     restTimerToggle.disabled = !duration;
     restTimerReset.disabled = !active;
-    restTimerToggle.textContent = active && active.running ? "Ⅱ" : "▶";
+    restTimerToggle.textContent = active && active.running ? "Pausa" : "Avvia";
     restTimerToggle.setAttribute("aria-label", active && active.running ? "Metti in pausa il timer" : "Avvia timer recupero");
   }
 
@@ -573,6 +730,48 @@
   }
 
   let activeSheet = null;
+  let healthSheet = null;
+
+  function closeHealthSheet() {
+    if (!healthSheet) return;
+    healthSheet.remove();
+    healthSheet = null;
+  }
+
+  function openHealthSheet(card, label) {
+    closeHealthSheet();
+    const overlay = node("div", "health-overlay");
+    const sheet = node("div", "health-sheet");
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-modal", "true");
+    sheet.setAttribute("aria-label", label);
+    const grabber = node("div", "sheet-grabber");
+    const heading = node("div", "health-sheet-heading");
+    heading.append(node("h2", "", label));
+    const dismiss = button("", "sheet-icon", closeHealthSheet);
+    dismiss.append(icon("close", 19));
+    dismiss.setAttribute("aria-label", "Chiudi dettagli");
+    heading.append(dismiss);
+    sheet.append(grabber, heading, card);
+    overlay.append(sheet);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) closeHealthSheet();
+    });
+    let startY = 0;
+    let startX = 0;
+    let canDismiss = false;
+    sheet.addEventListener("touchstart", (event) => {
+      startY = event.touches[0].clientY;
+      startX = event.touches[0].clientX;
+      canDismiss = sheet.scrollTop < 2 && !event.target.closest("input, textarea, button, label");
+    }, { passive: true });
+    sheet.addEventListener("touchend", (event) => {
+      const dy = event.changedTouches[0].clientY - startY;
+      if (canDismiss && dy > 80 && dy > Math.abs(event.changedTouches[0].clientX - startX) * 1.5) closeHealthSheet();
+    }, { passive: true });
+    document.querySelector(".app-shell").append(overlay);
+    healthSheet = overlay;
+  }
 
   function closeExerciseSheet() {
     if (activeSheet) {
@@ -591,15 +790,18 @@
     sheet.setAttribute("role", "dialog");
     sheet.setAttribute("aria-modal", "true");
     sheet.setAttribute("aria-label", exercise.name);
+    sheet.append(node("div", "sheet-grabber"));
     const top = node("div", "sheet-top");
-    const close = button("✕", "sheet-icon", closeExerciseSheet);
+    const close = button("", "sheet-icon", closeExerciseSheet);
+    close.append(icon("close", 20));
     close.setAttribute("aria-label", "Chiudi esercizio");
     const progress = node("div", "sheet-progress");
     progress.setAttribute("aria-label", `Esercizio ${index + 1} di ${exercises.length}`);
     const fill = node("span");
     fill.style.width = `${(index + 1) / exercises.length * 100}%`;
     progress.append(fill);
-    const historyButton = button("▥", "sheet-icon", () => card.sheetData.showHistory());
+    const historyButton = button("", "sheet-icon", () => card.sheetData.showHistory());
+    historyButton.append(icon("history", 20));
     historyButton.setAttribute("aria-label", "Storico pesi");
     top.append(close, progress, historyButton);
     const scroll = node("div", "sheet-scroll");
@@ -695,8 +897,7 @@
         svg.append(stem);
         return;
       }
-      const linePath = recorded.map((point, index) =>
-        `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+      const linePath = smoothPath(recorded);
       const area = document.createElementNS(svg.namespaceURI, "path");
       area.setAttribute("d", `${linePath} L ${recorded[recorded.length - 1].x} ${baseline} ` +
         `L ${recorded[0].x} ${baseline} Z`);
@@ -715,9 +916,18 @@
         dot.setAttribute("r", point.week === selectedWeek ? "5" : "3.5");
         dot.setAttribute("class", `volume-dot${point.week === selectedWeek ? " is-current" : ""}`);
         const title = document.createElementNS(svg.namespaceURI, "title");
-        title.textContent = `Settimana ${point.week}: ${point.value.toLocaleString("it-IT")} kg × rip.`;
+        title.textContent = `Settimana ${point.week}: ${point.value.toLocaleString("it-IT")} kg`;
         dot.append(title);
         svg.append(dot);
+      }
+
+      function smoothPath(points) {
+        return points.reduce((path, point, index) => {
+          if (!index) return `M ${point.x} ${point.y}`;
+          const previous = points[index - 1];
+          const mid = (previous.x + point.x) / 2;
+          return `${path} C ${mid} ${previous.y}, ${mid} ${point.y}, ${point.x} ${point.y}`;
+        }, "");
       }
       const label = document.createElementNS(svg.namespaceURI, "text");
       label.setAttribute("x", String(point.x));
@@ -808,7 +1018,8 @@
     if (state.profileImage) profileImage.src = state.profileImage;
     const profileInitial = node("span", "profile-initial", "M");
     profileInitial.hidden = Boolean(state.profileImage);
-    const photoBadge = node("span", "profile-photo-badge", "+");
+    const photoBadge = node("span", "profile-photo-badge");
+    photoBadge.append(icon("camera", 11));
     const photoInput = document.createElement("input");
     photoInput.type = "file";
     photoInput.accept = "image/*";
@@ -939,7 +1150,8 @@
       }
       card.append(glasses);
       const actions = node("div", "action-row");
-      actions.append(button("+ Bicchiere", "primary-button", () => setCount(count + 1)));
+      actions.append(button(`+${glassMl} ml`, "secondary-button", () => setCount(count + 1)),
+        button(`+${glassMl * 2} ml`, "secondary-button", () => setCount(count + 2)));
       if (count) actions.append(button("− Bicchiere", "secondary-button", () => setCount(count - 1)));
       card.append(actions, node("p", "hint", `Un bicchiere = ${glassMl} ml. Puoi cambiare obiettivo e dimensione in Altro.`));
     });
@@ -966,7 +1178,7 @@
       svgNode("text", { x: 2, y: baseline + 3, class: "volume-week-label" }, String(minimum)),
       svgNode("line", { x1: left, x2: right, y1: baseline, y2: baseline, stroke: "#3a3a3a" }));
     if (points.length > 1) {
-      svg.append(svgNode("path", { d: points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" "), class: "volume-line" }));
+      svg.append(svgNode("path", { d: smoothPath(points), class: "volume-line" }));
     }
     points.forEach((point, index) => {
       const dot = svgNode("circle", { cx: point.x, cy: point.y, r: 4, class: `volume-dot${index === points.length - 1 ? " is-current" : ""}` });
@@ -1047,7 +1259,11 @@
     return dailyCard("supplement-card", (card, draw) => {
       const health = ensureHealth();
       const today = dateKey();
-      card.append(node("h3", "", "Integratori di oggi"));
+      const heading = node("h3", "settings-icon-heading");
+      const symbol = node("span", "settings-icon settings-icon-supplement");
+      symbol.append(icon("supplement", 19));
+      heading.append(symbol, node("span", "", "Integratori di oggi"));
+      card.append(heading);
       if (!health.supplements.length) {
         card.append(node("p", "hint", "Non hai ancora aggiunto integratori. Aggiungili qui sotto, in Impostazioni."));
         return;
@@ -1095,13 +1311,21 @@
   function settingsCard() {
     return dailyCard("settings-card", (card) => {
       const health = ensureHealth();
-      card.append(node("h3", "", "Obiettivi giornalieri"));
+      const heading = node("h3", "settings-icon-heading");
+      const symbol = node("span", "settings-icon settings-icon-settings");
+      symbol.append(icon("settings", 18));
+      heading.append(symbol, node("span", "", "Obiettivi giornalieri"));
+      card.append(heading);
       const grid = node("div", "field-grid");
       grid.append(goalField("Passi", "steps", "passi", 1000, 100000),
         goalField("Acqua", "water", "bicchieri", 1, 30),
         goalField("Bicchiere", "glassMl", "ml", 50, 1000));
       card.append(grid);
-      card.append(node("h3", "settings-subtitle", "Gestisci integratori"));
+      const supplementHeading = node("h3", "settings-subtitle settings-icon-heading");
+      const supplementSymbol = node("span", "settings-icon settings-icon-supplement");
+      supplementSymbol.append(icon("supplement", 18));
+      supplementHeading.append(supplementSymbol, node("span", "", "Gestisci integratori"));
+      card.append(supplementHeading);
       for (const item of health.supplements) {
         const row = node("div", "supplement-row");
         row.append(node("span", "", item.name), button("Rimuovi", "danger-button", () => {
@@ -1257,22 +1481,22 @@
   function renderMore() {
     const view = views.more;
     view.replaceChildren();
-    view.append(titleBlock("ALTRO", "Integratori e impostazioni.", "Spunta ciò che hai preso oggi e personalizza gli obiettivi."));
+    view.append(titleBlock("PERSONALIZZA", "Altro", "I tuoi obiettivi, integratori e dati in un unico posto."));
+    const section = (label) => node("h2", "settings-section-title", label);
+    view.append(section("INTEGRATORI DI OGGI"));
     view.append(supplementCard());
-    const heading = node("div", "section-heading");
-    heading.append(node("h2", "", "Impostazioni"));
-    view.append(heading, settingsCard());
-    const backupHeading = node("div", "section-heading");
-    backupHeading.append(node("h2", "", "Conserva i tuoi dati"));
-    view.append(backupHeading, backupCard());
+    view.append(section("OBIETTIVI E INTEGRATORI"), settingsCard());
+    view.append(section("BACKUP"), backupCard());
     const script = document.querySelector('script[src*="app.js"]');
     const version = script ? new URL(script.src).searchParams.get("v") : "";
-    if (version) view.append(node("p", "hint app-version", `Versione app: ${version}`));
-    view.append(diagnosticsCard());
+    const diagnostics = node("details", "diagnostic-details");
+    diagnostics.append(node("summary", "", `Informazioni app${version ? ` · v${version}` : ""}`), diagnosticsCard());
+    view.append(diagnostics);
   }
 
   function renderHome() {
     ensureSelection();
+    homeTilesRefresh = null;
     const plan = activePlan();
     const week = state.selection.week;
     const progress = weekProgress(plan, week);
@@ -1282,24 +1506,70 @@
 
     const hour = new Date().getHours();
     const greeting = hour < 13 ? "Buongiorno" : hour < 18 ? "Buon pomeriggio" : "Buonasera";
-    const hero = node("div", "hero");
-    hero.append(node("div", "eyebrow",
-      new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })));
-    const title = node("h1", "hero-greeting");
-    title.append(document.createTextNode(`${greeting}, `), node("span", "hero-name", "Marco."));
-    hero.append(title);
+    const homeHeading = node("div", "home-heading");
+    homeHeading.append(node("p", "eyebrow",
+      new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })),
+      node("h1", "page-title", "Riepilogo"),
+      node("p", "home-salutation", `${greeting}, Marco`));
+    view.append(homeHeading);
     const dayStates = plan.days.map((day, index) => ({ day, index, item: progress.days[index] }));
     const upcoming = dayStates.find(({ item }) => item.total > item.completed);
+    const health = ensureHealth();
+    const today = dateKey();
+    const rings = node("div", "activity-card");
+    const ringGraphic = svgNode("svg", { viewBox: "0 0 170 170", role: "img", "aria-label": "Anelli attività: allenamento, acqua e passi" });
+    const trainingTotal = progress.days.reduce((sum, item) => sum + item.total, 0);
+    const trainingDone = progress.days.reduce((sum, item) => sum + item.completed, 0);
+    const ringValues = [
+      { color: "#C6F135", ratio: trainingTotal ? trainingDone / trainingTotal : 0, label: "Allenamento",
+        value: `${trainingDone}/${trainingTotal} esercizi` },
+      { color: "#32ADE6", ratio: (health.water[today] || 0) / health.goals.water, label: "Acqua",
+        value: `${health.water[today] || 0}/${health.goals.water} bicchieri` },
+      { color: "#FF8A3D", ratio: (health.steps[today] || 0) / health.goals.steps, label: "Passi",
+        value: formatNumber(health.steps[today] || 0) },
+    ];
+    ringValues.forEach((item, index) => {
+      const radius = 70 - index * 19;
+      const circumference = 2 * Math.PI * radius;
+      ringGraphic.append(svgNode("circle", { cx: 85, cy: 85, r: radius, class: "ring-track", "stroke-width": 11 }));
+      ringGraphic.append(svgNode("circle", { cx: 85, cy: 85, r: radius, class: "ring-progress",
+        stroke: item.color, "stroke-width": 11, "stroke-dasharray": `${Math.min(1, Math.max(0, item.ratio)) * circumference} ${circumference}`,
+        opacity: item.ratio ? 1 : 0, transform: "rotate(-90 85 85)" }));
+    });
+    if (ringValues.every((item) => item.ratio >= 1)) {
+      ringGraphic.append(svgNode("path", { d: "M80 84l4 4 8-9", fill: "none", stroke: "#C6F135",
+        "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+    }
+    const legend = node("div", "activity-legend");
+    legend.append(node("h2", "", "Attività"));
+    ringValues.forEach((item) => {
+      const row = node("div", "ring-legend-row");
+      row.style.setProperty("--metric-color", item.color);
+      row.append(node("span", "ring-dot"), node("div", "ring-legend-text"));
+      row.lastChild.append(node("span", "", item.label), node("strong", "", item.value));
+      legend.append(row);
+    });
+    rings.append(ringGraphic, legend);
+    view.append(rings);
+
+    const hero = node("div", "hero");
+    hero.append(node("span", "eyebrow", "PROSSIMO ALLENAMENTO"));
     if (upcoming) {
       const { day, item } = upcoming;
       const started = item.completed > 0;
-      hero.append(node("p", "hero-copy",
-        `${started ? "Riprendi" : "Prossimo allenamento"} · Settimana ${week}`));
       const next = node("div", "next-workout");
       const nextText = node("div");
       nextText.append(node("strong", "", day.name),
-        node("span", "", `${day.subtitle || "La tua seduta"} · ${item.completed}/${item.total} esercizi`));
+        node("span", "", `${day.subtitle || "La tua seduta"} · S${week} · ${item.completed}/${item.total}`));
       next.append(nextText);
+      const art = activeExercises(day, week).map(exerciseIllustration).find(Boolean);
+      if (art) {
+        const image = document.createElement("img");
+        image.className = "next-art";
+        image.src = art.src;
+        image.alt = "";
+        next.append(image);
+      }
       hero.append(next, button(started ? "Continua" : "Inizia allenamento", "primary-button hero-action", () => {
         state.selection.dayId = day.id;
         persist();
@@ -1310,6 +1580,7 @@
         ? "Settimana completata. Ottimo lavoro! Recupera bene."
         : "Nessun esercizio programmato per questa settimana."));
     }
+    view.append(hero);
     const dots = node("div", "week-dots");
     dots.setAttribute("aria-label", `${progress.completed} di ${progress.total} giornate completate`);
     dayStates.forEach(({ day, item }) => {
@@ -1320,17 +1591,33 @@
       });
       dots.append(dot);
     });
-    hero.append(dots);
-    view.append(hero);
+    view.append(dots);
 
     const todayHeading = node("div", "section-heading");
     todayHeading.append(node("h2", "", "Oggi"));
     const tiles = node("div", "today-grid");
     const detailCards = {};
-    const redrawHome = () => {
-      const top = scrollContent.scrollTop;
-      renderHome();
-      scrollContent.scrollTop = top;
+    const miniBars = (kind, data) => {
+      const graph = node("div", `tile-mini tile-mini-${kind}`);
+      if (kind === "weight" && data.length > 1) {
+        const minimum = Math.min(...data);
+        const maximum = Math.max(...data);
+        const points = data.map((value, index) => ({
+          x: 2 + index * 80 / (data.length - 1),
+          y: 19 - (value - minimum) / Math.max(maximum - minimum, 1) * 16,
+        }));
+        const svg = svgNode("svg", { viewBox: "0 0 85 22", "aria-hidden": "true" });
+        svg.append(svgNode("path", { d: smoothPath(points), fill: "none", stroke: "currentColor",
+          "stroke-width": 2, "stroke-linecap": "round" }));
+        graph.append(svg);
+        return graph;
+      }
+      data.forEach((value) => {
+        const bar = node("span");
+        bar.style.height = `${Math.max(3, Math.min(100, value * 100))}%`;
+        graph.append(bar);
+      });
+      return graph;
     };
     const drawTiles = () => {
       const health = ensureHealth();
@@ -1339,43 +1626,55 @@
       const glasses = health.water[today] || 0;
       const lastWeight = health.weights.slice().sort((a, b) => a.date.localeCompare(b.date)).pop();
       const taken = (health.supplementLog[today] || []).filter((id) => health.supplements.some((item) => item.id === id)).length;
-      const tile = (label, value, detail, ratio, actionLabel, action) => {
-        const result = node("div", "today-tile");
-        result.append(node("span", "tile-label", label), node("strong", "tile-value", value),
-          node("span", "tile-detail", detail));
-        if (ratio !== null) result.append(progressBar(ratio));
-        result.append(button(actionLabel, "tile-action", action));
+      const tile = (kind, label, value, unit, data, action) => {
+        const result = button("", `today-tile tile-${kind}`, action);
+        result.setAttribute("aria-label", `${label}: ${value}${unit ? " " + unit : ""}. Apri dettagli`);
+        const top = node("div", "tile-top");
+        top.append(icon(kind, 23), node("span", "tile-label", label));
+        const number = node("strong", "tile-value", value);
+        number.append(node("small", "", unit));
+        const foot = node("div", "tile-foot");
+        foot.append(miniBars(kind, data), node("span", "tile-action", "+"));
+        result.append(top, number, foot);
         return result;
       };
+      const weekValues = (key, goal) => Array.from({ length: 7 }, (_, index) => {
+        const day = new Date();
+        day.setDate(day.getDate() - 6 + index);
+        return (health[key][dateKey(day)] || 0) / goal;
+      });
+      const weightValues = health.weights.slice().sort((a, b) => a.date.localeCompare(b.date)).slice(-7);
       tiles.replaceChildren(
-        tile("PASSI", formatNumber(steps), `su ${formatNumber(health.goals.steps)}`, steps / health.goals.steps, "+1.000", () => {
-          health.steps[today] = Math.min(200000, steps + 1000);
-          persist();
-          redrawHome();
-        }),
-        tile("ACQUA", `${glasses}/${health.goals.water}`,
-          `${formatNumber(glasses * health.goals.glassMl / 1000, 2)} L`, glasses / health.goals.water, "+ Bicchiere", () => {
-            health.water[today] = Math.min(100, glasses + 1);
-            persist();
-            redrawHome();
-          }),
-        tile("PESO", lastWeight ? `${formatNumber(lastWeight.kg, 1)} kg` : "—",
-          lastWeight ? (lastWeight.date === today ? "registrato oggi" : "ultimo valore") : "non registrato", null,
-          lastWeight && lastWeight.date === today ? "Modifica" : "Registra",
-          () => detailCards.weight.scrollIntoView({ behavior: "smooth", block: "center" })),
-        tile("INTEGRATORI", health.supplements.length ? `${taken}/${health.supplements.length}` : "—",
-          health.supplements.length ? "presi oggi" : "da aggiungere",
-          health.supplements.length ? taken / health.supplements.length : null, "Apri", () => setScreen("more"))
+        tile("steps", "PASSI", formatNumber(steps), "passi",
+          weekValues("steps", health.goals.steps), () => openHealthSheet(detailCards.steps, "Passi")),
+        tile("water", "ACQUA", formatNumber(glasses * health.goals.glassMl / 1000, 2), "L",
+          weekValues("water", health.goals.water), () => openHealthSheet(detailCards.water, "Acqua")),
+        tile("weight", "PESO", lastWeight ? formatNumber(lastWeight.kg, 1) : "—", "kg",
+          weightValues.map((entry) => entry.kg),
+          () => openHealthSheet(detailCards.weight, "Peso")),
+        tile("supplement", "INTEGRATORI", health.supplements.length ? `${taken}/${health.supplements.length}` : "—", "presi",
+          health.supplements.map((item) => (health.supplementLog[today] || []).includes(item.id) ? 1 : .16),
+          () => setScreen("more"))
       );
+      ringValues[0].ratio = trainingTotal ? trainingDone / trainingTotal : 0;
+      ringValues[1].ratio = glasses / health.goals.water;
+      ringValues[1].value = `${glasses}/${health.goals.water} bicchieri`;
+      ringValues[2].ratio = steps / health.goals.steps;
+      ringValues[2].value = formatNumber(steps);
+      ringGraphic.querySelectorAll(".ring-progress").forEach((circle, index) => {
+        const radius = 70 - index * 19;
+        circle.setAttribute("stroke-dasharray",
+          `${Math.min(1, Math.max(0, ringValues[index].ratio)) * 2 * Math.PI * radius} ${2 * Math.PI * radius}`);
+        circle.setAttribute("opacity", ringValues[index].ratio ? "1" : "0");
+      });
+      legend.querySelectorAll(".ring-legend-text strong").forEach((label, index) => { label.textContent = ringValues[index].value; });
     };
     drawTiles();
     homeTilesRefresh = drawTiles;
     detailCards.steps = stepsCard();
     detailCards.water = waterCard();
     detailCards.weight = weightCard();
-    const detailHeading = node("div", "section-heading");
-    detailHeading.append(node("h2", "", "Dettagli e andamento"));
-    view.append(todayHeading, tiles, detailHeading, detailCards.steps, detailCards.water, detailCards.weight);
+    view.append(todayHeading, tiles);
 
     const heading = node("div", "section-heading");
     heading.append(node("h2", "", "I tuoi progressi"));
@@ -1416,24 +1715,24 @@
     const volumeValues = Array.from({ length: plan.weeks }, (_, index) => weekVolume(plan, index + 1));
     const volumeCard = node("div", "home-card volume-card");
     volumeCard.append(node("h3", "", "Il tuo volume"));
-    volumeCard.append(node("p", "hint", "Carico registrato durante gli allenamenti."));
+    volumeCard.append(node("p", "hint", "Quanto peso hai sollevato in totale: peso × ripetizioni di tutte le serie completate."));
     const volumeStats = node("div", "volume-stats");
     const currentVolume = node("div", "volume-stat");
     const currentValue = node("strong");
     currentValue.append(document.createTextNode(volumeValues[week - 1].toLocaleString("it-IT")),
-      node("small", "", "kg × rip."));
-    currentVolume.append(node("span", "", `SETTIMANA ${week}`), currentValue);
+      node("small", "", "kg"));
+    currentVolume.append(node("span", "", `Settimana ${week}`), currentValue);
     const blockVolume = node("div", "volume-stat");
     const totalVolume = volumeValues.reduce((sum, value) => sum + value, 0);
     const blockValue = node("strong");
     blockValue.append(document.createTextNode(totalVolume.toLocaleString("it-IT")),
-      node("small", "", "kg × rip."));
-    blockVolume.append(node("span", "", "TOTALE BLOCCO"), blockValue);
+      node("small", "", "kg"));
+    blockVolume.append(node("span", "", "Totale blocco"), blockValue);
     volumeStats.append(currentVolume, blockVolume);
     volumeCard.append(volumeStats);
     if (totalVolume === 0) {
       volumeCard.append(node("p", "volume-empty",
-        "Nessun volume registrato. Aggiungi pesi e ripetizioni durante l'allenamento per vedere l'andamento."));
+        "Ancora nessun dato. Inserisci peso e ripetizioni nelle serie: qui vedrai il carico sollevato settimana dopo settimana."));
     } else {
       const volumeChartWrap = node("div", "volume-chart-wrap");
       volumeChartWrap.append(volumeChart(volumeValues, week));
@@ -1464,7 +1763,7 @@
       weekly.append(bars);
     } else {
       weekly.append(node("p", "volume-empty",
-        "Nessuna giornata completata. Le settimane appariranno qui dopo il primo allenamento."));
+        "Ancora nessuna giornata completata. Le settimane compariranno qui dopo il primo allenamento."));
     }
     view.append(weekly);
 
@@ -1510,22 +1809,39 @@
     const headingText = node("div");
     headingText.append(node("h1", "page-title", "Allenamento"), node("p", "", "Scegli il giorno"));
     const weekControl = node("div", "week-control");
-    const previous = button("‹", "icon-button", () => {
+    const chevron = (direction) => {
+      const icon = svgNode("svg", { viewBox: "0 0 24 24", width: 18, height: 18, fill: "none", stroke: "currentColor",
+        "stroke-width": 2.4, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" });
+      icon.append(svgNode("path", { d: direction < 0 ? "M14.5 6l-6 6 6 6" : "M9.5 6l6 6-6 6" }));
+      return icon;
+    };
+    const previous = button("", "icon-button", () => {
       state.selection.week -= 1;
       persist();
       renderWorkout();
     });
+    previous.append(chevron(-1));
     previous.disabled = week === 1;
     previous.setAttribute("aria-label", "Settimana precedente");
-    const next = button("›", "icon-button", () => {
+    const next = button("", "icon-button", () => {
       state.selection.week += 1;
       persist();
       renderWorkout();
     });
+    next.append(chevron(1));
     next.disabled = week === plan.weeks;
     next.setAttribute("aria-label", "Settimana successiva");
     const weekLabel = node("span", "week-label");
-    weekLabel.append(node("small", "", "SETT."), node("b", "", `${week}/${plan.weeks}`));
+    weekLabel.setAttribute("aria-live", "polite");
+    weekLabel.append(node("small", "", "SETTIMANA"), node("b", "", `${week} / ${plan.weeks}`));
+    if (plan.weeks <= 10) {
+      const dots = node("span", "week-pips");
+      dots.setAttribute("aria-hidden", "true");
+      for (let number = 1; number <= plan.weeks; number += 1) {
+        dots.append(node("i", number === week ? "is-current" : (number < week ? "is-past" : "")));
+      }
+      weekLabel.append(dots);
+    }
     weekControl.append(previous, weekLabel, next);
     heading.append(headingText, weekControl);
     view.append(heading);
@@ -1545,9 +1861,9 @@
     );
     const doneCount = node("span", "", "");
     routine.append(rir, doneCount);
-    view.append(routine);
     const guide = node("details", "workout-guide");
     guide.append(node("summary", "", "Come leggere la scheda"));
+    guide.querySelector("summary").setAttribute("aria-label", "Come leggere la scheda");
     const guideList = node("ul", "workout-guide-list");
     [
       "3 × 8–12 significa 3 serie, ciascuna da 8 a 12 ripetizioni; recupera per il tempo indicato.",
@@ -1556,7 +1872,17 @@
       "Nei movimenti a un braccio completa entrambi i lati prima del recupero. Le sigle 7a/7b sono braccia sulla stessa panca; se è occupata, svolgili separati."
     ].forEach((text) => guideList.append(node("li", "", text)));
     guide.append(guideList);
-    view.append(guide);
+    const closeGuide = (event) => {
+      if (!guide.isConnected) {
+        document.removeEventListener("pointerdown", closeGuide, true);
+      } else if (guide.open && !guide.contains(event.target)) {
+        guide.open = false;
+      }
+    };
+    document.addEventListener("pointerdown", closeGuide, true);
+    const routineGuide = node("div", "routine-guide");
+    routineGuide.append(routine, guide);
+    view.append(routineGuide);
     const exerciseHeading = node("div", "section-heading");
     const exerciseTitle = node("div");
     exerciseTitle.append(node("h2", "", day.name), node("p", "", day.subtitle || "La tua seduta"));
@@ -1566,6 +1892,10 @@
     const list = node("div", "exercise-list");
     const cards = new Map();
     const dayIndex = plan.days.findIndex((item) => item.id === day.id);
+    let lastCompleted = null;
+    const summaryButton = button("Riepilogo seduta", "secondary-button summary-button",
+      () => openSessionSummary(plan, day, week, exercises));
+    summaryButton.hidden = true;
     const updateCount = () => {
       const completed = exercises.filter((exercise) => recordIsComplete(plan, day, week, exercise)).length;
       const next = exercises.find((exercise) => !recordIsComplete(plan, day, week, exercise));
@@ -1577,6 +1907,11 @@
         card.classList.toggle("is-next", Boolean(next && next.id === exercise.id));
       }
       doneCount.textContent = `${completed}/${exercises.length} completati`;
+      summaryButton.hidden = !(completed > 0 || sessionStats(plan, day, week, exercises).setsDone > 0);
+      if (lastCompleted !== null && lastCompleted < exercises.length && completed === exercises.length) {
+        window.setTimeout(() => openSessionSummary(plan, day, week, exercises), 450);
+      }
+      lastCompleted = completed;
     };
     if (!exercises.length) {
       list.append(node("div", "empty-state", "Nessun esercizio programmato per questa settimana."));
@@ -1592,8 +1927,51 @@
       openExerciseSheet({ plan, day, week, exercises, index, card, openExercise });
     };
     updateCount();
-    view.append(list);
+    view.append(list, summaryButton);
     updateRestTimerUI();
+  }
+
+  function formatDuration(minutes) {
+    if (!minutes) return "—";
+    return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}` : `${minutes} min`;
+  }
+
+  function openSessionSummary(plan, day, week, exercises) {
+    const stats = sessionStats(plan, day, week, exercises);
+    const card = node("div", "summary-card");
+    const finished = stats.total > 0 && stats.exercisesDone === stats.total;
+    card.append(node("p", "summary-lead", finished
+      ? `${day.name} completato. Ottimo lavoro!`
+      : `Finora hai completato ${stats.exercisesDone} ${stats.exercisesDone === 1 ? "esercizio" : "esercizi"} su ${stats.total}.`));
+    const tiles = node("div", "summary-tiles");
+    const tile = (label, value, unit = "") => {
+      const item = node("div", "sheet-tile");
+      const strong = node("strong", "", value);
+      if (unit) strong.append(node("small", "", ` ${unit}`));
+      item.append(node("span", "", label), strong);
+      return item;
+    };
+    tiles.append(
+      tile("Durata", formatDuration(stats.minutes)),
+      tile("Esercizi", `${stats.exercisesDone}/${stats.total}`),
+      tile("Serie", String(stats.setsDone)),
+      tile("Volume", formatNumber(Math.round(stats.volume)), "kg")
+    );
+    card.append(tiles);
+    const prTitle = node("h3", "summary-title", stats.prs.length ? "Nuovi record" : "Record");
+    card.append(prTitle);
+    if (stats.prs.length) {
+      for (const pr of stats.prs) {
+        const row = node("div", "summary-pr");
+        row.append(node("strong", "", pr.name), node("span", "", pr.load
+          ? `${formatNumber(pr.now.load, 2)} kg · prima ${formatNumber(pr.prior.load, 2)} kg`
+          : `Massimale stimato ${formatNumber(pr.now.e1rm, 1)} kg · prima ${formatNumber(pr.prior.e1rm, 1)} kg`));
+        card.append(row);
+      }
+    } else {
+      card.append(node("p", "hint", "Nessun nuovo record in questa seduta: i record compaiono quando superi peso o forza stimata delle sedute precedenti."));
+    }
+    openHealthSheet(card, "Riepilogo seduta");
   }
 
   function formatSetSummary(set, unilateral) {
@@ -1791,6 +2169,13 @@
       ? exercise.reps
       : `${exercise.sets[week - 1]} serie  ·  ${exercise.reps} rip.`;
     info.append(node("p", "exercise-target", target));
+    const noteLine = node("p", "exercise-note");
+    const savedNote = () => (isObject(state.exerciseNotes) && state.exerciseNotes[exercise.name]) || "";
+    noteLine.textContent = savedNote();
+    noteLine.hidden = !noteLine.textContent;
+    const prChip = node("span", "pr-badge", "Record");
+    prChip.hidden = true;
+    info.append(noteLine, prChip);
     const status = node("span", "exercise-status sr-only");
     status.setAttribute("role", "status");
     info.append(status);
@@ -1817,21 +2202,45 @@
       body.append(gallery);
     }
     const tiles = node("div", "sheet-tiles");
-    const infoTile = (label, value) => {
+    const infoTile = (label, value, unit = "") => {
       const tile = node("div", "sheet-tile");
-      tile.append(node("span", "", label), node("strong", "", value));
+      const strong = node("strong", "", value);
+      if (unit) strong.append(node("small", "", unit));
+      tile.append(node("span", "", label), strong);
       return tile;
     };
+    const restSeconds = parseRestSeconds(exercise.rest);
+    const restValue = !restSeconds ? exercise.rest
+      : restSeconds < 60 ? String(restSeconds)
+        : `${Math.floor(restSeconds / 60)}${restSeconds % 60 ? `:${String(restSeconds % 60).padStart(2, "0")}` : ""}`;
+    const restUnit = !restSeconds ? "" : restSeconds < 60 ? " sec" : " min";
+    const repsParts = String(exercise.reps).split("/");
     if (isCardio) {
       tiles.append(infoTile("Durata", exercise.reps));
     } else {
-      tiles.append(infoTile("Serie", String(targetCount)), infoTile("Rip.", exercise.reps), infoTile("Recupero", exercise.rest));
+      tiles.append(
+        infoTile("Serie", String(targetCount), exercise.unilateral ? " per lato" : ""),
+        infoTile("Ripetizioni", repsParts[0].trim(), repsParts[1] ? ` /${repsParts[1].trim()}` : ""),
+        infoTile("Recupero", restValue, restUnit)
+      );
     }
     body.append(tiles);
     const chips = node("div", "sheet-chips");
     if (exercise.pair) chips.append(node("span", "chip", `Superserie ${exercise.pair}`));
     if (exercise.unilateral) chips.append(node("span", "chip", "Per lato"));
-    if (chips.childElementCount) body.append(chips);
+    const prChipSheet = node("span", "chip pr-chip", "Nuovo record personale");
+    prChipSheet.hidden = true;
+    chips.append(prChipSheet);
+    body.append(chips);
+    const coachLines = coachingTip(plan, week, exercise, targetCount);
+    if (coachLines.length) {
+      const coach = node("section", "coach-tip");
+      const coachHead = node("div", "coach-head");
+      coachHead.append(node("h3", "", "Obiettivo di oggi"));
+      coach.append(coachHead);
+      coachLines.forEach((line) => coach.append(node("p", "", line)));
+      body.append(coach);
+    }
     const instructions = exerciseInstructions(day, exercise);
     if (instructions) {
       const instructionBlock = node("details", "exercise-instructions");
@@ -1849,6 +2258,25 @@
       body.append(instructionBlock);
     }
 
+    const machineNote = node("div", "machine-note");
+    machineNote.append(node("h3", "", "Le mie regolazioni"));
+    const machineInput = document.createElement("textarea");
+    machineInput.rows = 2;
+    machineInput.maxLength = 300;
+    machineInput.placeholder = "Es. sedile 4 · schienale 3 · presa larga";
+    machineInput.value = savedNote();
+    machineInput.setAttribute("aria-label", `Regolazioni per ${exercise.name}`);
+    machineInput.addEventListener("input", () => {
+      if (!isObject(state.exerciseNotes)) state.exerciseNotes = {};
+      const text = machineInput.value.trim();
+      if (text) state.exerciseNotes[exercise.name] = text;
+      else delete state.exerciseNotes[exercise.name];
+      persist();
+      noteLine.textContent = text;
+      noteLine.hidden = !text;
+    });
+    machineNote.append(machineInput);
+    body.append(machineNote);
     if (!isCardio && existing && (existing.load || existing.reps)) {
       const oldValues = [existing.load ? `${existing.load} kg` : "", existing.reps].filter(Boolean).join(" · ");
       body.append(node("div", "legacy-record",
@@ -1876,8 +2304,8 @@
       body.append(grid);
     } else {
       const list = node("div", `series-table${exercise.unilateral ? " is-unilateral" : ""}`);
-      const head = node("div", "series-row series-head");
-      ["Set", "Precedente", "Kg", ...(exercise.unilateral ? ["Dx", "Sx"] : ["Rip."]), ""]
+      const head = node("div", `series-row series-head${exercise.unilateral ? " is-unilateral" : ""}`);
+      ["Set", "Precedente", ...(exercise.unilateral ? ["Dx", "Sx"] : ["Rip."]), "Kg", ""]
         .forEach((label) => head.append(node("span", "", label)));
       list.append(head);
       const cell = (value, placeholder, mode, maxLength, onInput, label) => {
@@ -1898,14 +2326,20 @@
         const row = node("div", `series-row${exercise.unilateral ? " is-unilateral" : ""}`);
         row.setAttribute("role", "group");
         row.setAttribute("aria-label", `Serie ${index + 1}`);
-        row.append(node("span", "series-number", String(index + 1)),
-          node("span", "series-prev", before && (before.load || before.reps || before.left || before.right)
-            ? `${before.load ? formatNumber(Number(before.load.replace(",", ".")) || 0, 2) : "—"} kg × ${
-              exercise.unilateral ? `${before.right || "—"}/${before.left || "—"}` : (before.reps || "—")}`
-            : "-"));
+        const hasBefore = Boolean(before && (before.load || before.reps || before.left || before.right));
+        const prev = node("span", "series-prev");
+        if (hasBefore) {
+          const beforeReps = exercise.unilateral ? `${before.right || "—"} · ${before.left || "—"}` : (before.reps || "—");
+          prev.append(
+            node("b", "", beforeReps),
+            node("i", "", before.load ? `${formatNumber(Number(before.load.replace(",", ".")) || 0, 2)} kg` : "— kg")
+          );
+        } else {
+          prev.textContent = "–";
+        }
+        row.append(node("span", "series-number", String(index + 1)), prev);
         const weight = cell(set.load, before && before.load, "decimal", 30,
           (value) => { set.load = value.trim(); seriesTouched = true; sync(); }, `Peso serie ${index + 1}`);
-        row.append(weight.input);
         const repsFields = [];
         const addRepetitions = (property, label, hint) => {
           const item = cell(set[property], hint, "numeric", 4,
@@ -1919,6 +2353,7 @@
         } else {
           addRepetitions("reps", "Ripetizioni", before && before.reps);
         }
+        row.append(weight.input);
         const checkLabel = node("label", "series-check");
         const check = document.createElement("input");
         check.type = "checkbox";
@@ -2006,6 +2441,16 @@
         status.textContent = `${done}/${targetCount} serie completate`;
       }
       setFields.forEach(({ row, set }) => row.classList.toggle("is-done", completeSet(set, exercise.unilateral)));
+      const pr = isCardio ? null : exercisePR(exercise, key, series);
+      prChip.hidden = !pr;
+      prChipSheet.hidden = !pr;
+      if (pr) {
+        const detail = pr.load
+          ? `${formatNumber(pr.now.load, 2)} kg (prima ${formatNumber(pr.prior.load, 2)} kg)`
+          : `massimale stimato ${formatNumber(pr.now.e1rm, 1)} kg (prima ${formatNumber(pr.prior.e1rm, 1)} kg)`;
+        prChip.title = detail;
+        prChipSheet.textContent = `Nuovo record · ${detail}`;
+      }
       setFields.forEach(({ row }, index) => {
         const checkbox = row.querySelector('input[type="checkbox"]');
         if (checkbox) checkbox.checked = completeSet(series[index], exercise.unilateral);
@@ -2066,6 +2511,7 @@
         delete state.records[key];
       } else {
         state.records[key] = record;
+        touchSession(plan, day, week);
       }
       persist();
       historyView.refresh();
@@ -2511,8 +2957,12 @@
 
   function backupCard() {
     const card = node("div", "info-card");
+    const heading = node("h3", "settings-icon-heading");
+    const symbol = node("span", "settings-icon settings-icon-backup");
+    symbol.append(icon("backup", 18));
+    heading.append(symbol, node("span", "", "Backup dei tuoi dati"));
     card.append(
-      node("strong", "", "Backup dei tuoi dati"),
+      heading,
       node("p", "hint",
         "Salva una copia nell'app File. Safari, la web app sulla schermata Home e dispositivi diversi " +
         "possono avere archivi separati. Il ripristino sostituisce i dati presenti nell'archivio corrente.")
@@ -2543,33 +2993,55 @@
     view.replaceChildren();
     view.append(titleBlock(
       "I TUOI PROGRESSI",
-      "Ogni passo conta.",
-      "Ritrova qui i dati registrati, anche dopo aver modificato una scheda."
+      "Storico",
+      "Ogni allenamento racconta i tuoi progressi."
     ));
     const records = Object.values(state.records)
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
-    const list = node("div", "history-list");
     if (!records.length) {
-      list.append(node("div", "empty-state", "Non hai ancora registrato esercizi. I tuoi allenamenti appariranno qui."));
+      const empty = node("div", "empty-state");
+      empty.append(icon("history", 64),
+        node("p", "", "Il tuo percorso inizia dal primo allenamento."),
+        button("Inizia un allenamento", "primary-button", () => setScreen("workout")));
+      view.append(empty);
+      return;
     }
+    const maximums = new Map();
+    records.forEach((record) => {
+      const maximum = Math.max(0, ...(record.series || [])
+        .map((set) => Number((set.load || "").replace(",", ".")) || 0));
+      maximums.set(record.exerciseName, Math.max(maximum, maximums.get(record.exerciseName) || 0));
+    });
+    let activeMonth = "";
+    let activeDay = "";
+    let list = null;
     for (const record of records) {
+      const date = new Date(record.updatedAt);
+      const valid = !Number.isNaN(date.getTime());
+      const month = valid ? date.toLocaleDateString("it-IT", { month: "long", year: "numeric" }) : "Altre date";
+      const day = valid ? date.toLocaleDateString("it-IT", { weekday: "long", day: "numeric" }) : record.updatedAt;
+      if (month !== activeMonth) {
+        activeMonth = month;
+        activeDay = "";
+        view.append(node("h2", "history-month", month.toLocaleUpperCase("it-IT")));
+      }
+      if (day !== activeDay) {
+        activeDay = day;
+        list = node("div", "history-list");
+        list.append(node("div", "history-day", day));
+        view.append(list);
+      }
       const card = node("div", "history-card");
+      card.append(node("span", "history-date-badge", valid ? String(date.getDate()) : "–"));
+      const content = node("div", "history-record-content");
       const head = node("div", "record-head");
       head.append(node("strong", "", record.exerciseName));
-      if (record.completed) head.append(node("span", "chip done", "Completato"));
-      card.append(head);
-      const date = new Date(record.updatedAt);
-      const dateLabel = Number.isNaN(date.getTime())
-        ? record.updatedAt
-        : date.toLocaleString("it-IT", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-      card.append(node("p", "record-meta", `${record.planName} · ${record.dayName} · S${record.week} · Modificato ${dateLabel}`));
+      content.append(head, node("p", "record-meta", `${record.planName} · ${record.dayName} · S${record.week}`));
       const details = [];
       const previous = [];
       if (record.load) previous.push(`${record.load} ${record.kind === "cardio" ? "min" : "kg"}`);
       if (record.reps) previous.push(record.reps);
-      if (previous.length) {
-        details.push(`${record.series ? "Registro precedente: " : ""}${previous.join(" · ")}`);
-      }
+      if (previous.length) details.push(`${record.series ? "Prec.: " : ""}${previous.join(" · ")}`);
       if (record.series) {
         record.series.forEach((set, index) => {
           if (!set.load && !set.reps && !set.left && !set.right) return;
@@ -2577,15 +3049,24 @@
           if (set.load) parts.push(`${set.load} kg`);
           if (set.left || set.right) parts.push(`dx ${set.right || "—"} / sx ${set.left || "—"}`);
           else if (set.reps) parts.push(`${set.reps} rip.`);
-          details.push(`Serie ${index + 1}: ${parts.join(" · ")}`);
+          details.push(`${index + 1} × ${parts.join(" · ")}`);
         });
       }
       if (record.rir) details.push(`RIR ${record.rir}`);
       if (record.notes) details.push(record.notes);
-      card.append(node("p", "record-data", details.join(" · ") || "Nessun dato inserito"));
+      content.append(node("p", "record-data", details.join("  ·  ") || "Nessun dato inserito"));
+      card.append(content);
+      if ((record.series || []).some((set) => Number((set.load || "").replace(",", ".")) > 0 &&
+          Number((set.load || "").replace(",", ".")) === maximums.get(record.exerciseName))) {
+        card.append(node("span", "chip", "Max"));
+      } else if (record.completed) {
+        const complete = node("span", "history-complete");
+        complete.append(icon("check", 16));
+        complete.setAttribute("aria-label", "Completato");
+        card.append(complete);
+      }
       list.append(card);
     }
-    view.append(list);
   }
 
   function fatal(message, raw) {
@@ -2600,6 +3081,7 @@
     }
     main.append(box);
     document.querySelector(".bottom-nav").hidden = true;
+    document.querySelector(".bottom-scrim").hidden = true;
   }
 
   async function loadIllustrations() {
