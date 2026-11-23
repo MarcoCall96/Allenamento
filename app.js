@@ -375,7 +375,6 @@
     }
     currentScreen = screen;
     for (const [name, view] of Object.entries(views)) view.hidden = name !== screen;
-    restTimerDock.hidden = true;
     closeExerciseSheet();
     closeHealthSheet();
     for (const nav of navButtons) {
@@ -626,6 +625,7 @@
     restTimerReset.disabled = !active;
     restTimerToggle.textContent = active && active.running ? "Pausa" : "Avvia";
     restTimerToggle.setAttribute("aria-label", active && active.running ? "Metti in pausa il timer" : "Avvia timer recupero");
+    syncFloatingTimer();
   }
 
   function startRestTimer(timerState) {
@@ -638,8 +638,10 @@
         window.clearInterval(timerState.interval);
         timerState.running = false;
         timerState.finished = true;
+        timerState.finishedAt = Date.now();
+        window.setTimeout(syncFloatingTimer, 8100);
         alertRestFinished();
-        if (selectedRestTimer && selectedRestTimer.key !== timerState.key) restTimerState = null;
+        if (selectedRestTimer && selectedRestTimer.key !== timerState.key && activeSheet) restTimerState = null;
       }
       updateRestTimerUI();
     }, 250);
@@ -781,13 +783,27 @@
     healthSheet = overlay;
   }
 
+  function syncFloatingTimer() {
+    const shell = document.querySelector(".app-shell");
+    if (activeSheet) {
+      shell.classList.remove("has-timer");
+      return;
+    }
+    if (restTimerDock.parentElement !== shell) shell.append(restTimerDock);
+    const state = restTimerState;
+    const show = Boolean(state && (state.running || (state.finished
+      ? Date.now() - (state.finishedAt || 0) < 8000
+      : state.remaining > 0)));
+    restTimerDock.hidden = !show;
+    shell.classList.toggle("has-timer", show);
+  }
+
   function closeExerciseSheet() {
     if (activeSheet) {
       activeSheet.remove();
       activeSheet = null;
     }
-    restTimerDock.hidden = true;
-    document.querySelector(".app-shell").append(restTimerDock);
+    syncFloatingTimer();
   }
 
   function openExerciseSheet({ plan, day, week, exercises, index, card, openExercise }) {
@@ -818,7 +834,10 @@
     restTimerDock.hidden = false;
     bottom.append(restTimerDock);
     const lastIndex = exercises.length - 1;
-    const done = button(index === lastIndex ? "✓ Fatto e termina" : "✓ Fatto", "primary-button done-button", () => {
+    const doneLabels = (ready) => (index === lastIndex
+      ? (ready ? "✓ Fatto e termina" : "Completa e termina")
+      : (ready ? "✓ Fatto" : "Completa esercizio"));
+    const done = button(doneLabels(false), "primary-button done-button", () => {
       if (!card.sheetData.markDone()) return;
       closeExerciseSheet();
       const next = exercises.findIndex((item, itemIndex) => itemIndex > index && !recordIsComplete(plan, day, week, item));
@@ -826,6 +845,13 @@
       else openSessionSummary(plan, day, week, exercises, true);
     });
     bottom.append(done);
+    const refreshDone = () => {
+      const ready = card.sheetData.isComplete();
+      done.textContent = doneLabels(ready);
+      done.classList.toggle("is-secondary", !ready);
+    };
+    card.sheetData.onUpdate = refreshDone;
+    refreshDone();
     sheet.append(top, scroll, bottom);
     onHorizontalSwipe(sheet, { onRight: closeExerciseSheet, edgeOnly: true });
     onHorizontalSwipe(sheet, {
@@ -2421,6 +2447,23 @@
         check.checked = completeSet(set, exercise.unilateral);
         check.setAttribute("aria-label", `Serie ${index + 1} completata`);
         check.addEventListener("change", () => {
+          if (check.checked) {
+            const previousSet = index > 0 ? series[index - 1] : null;
+            const take = (current, fromBefore, fromPrevious) => current || fromBefore || fromPrevious || "";
+            if (!set.load) {
+              set.load = take("", before && before.load, previousSet && previousSet.load);
+              weight.input.value = set.load;
+            }
+            if (exercise.unilateral) {
+              if (!set.right) set.right = take("", before && before.right, previousSet && previousSet.right);
+              if (!set.left) set.left = take("", before && before.left, previousSet && previousSet.left);
+              repsFields[0].input.value = set.right;
+              repsFields[1].input.value = set.left;
+            } else if (!set.reps) {
+              set.reps = take("", before && before.reps, previousSet && previousSet.reps);
+              repsFields[0].input.value = set.reps;
+            }
+          }
           set.done = check.checked;
           seriesTouched = true;
           sync();
@@ -2474,6 +2517,8 @@
     card.sheetData = {
       body,
       showHistory: historyView.show,
+      isComplete: () => recordIsComplete(plan, day, week, exercise),
+      onUpdate: null,
       markDone() {
         if (isCardio) {
           if (!minutes.input.value.trim()) {
@@ -2519,6 +2564,7 @@
         if (checkbox) checkbox.checked = completeSet(series[index], exercise.unilateral);
       });
       updateCount();
+      if (card.sheetData && card.sheetData.onUpdate) card.sheetData.onUpdate();
     }
 
     function sync() {
@@ -2932,13 +2978,13 @@
     return card;
   }
 
-  async function exportFile(filename, contents) {
-    const blob = new Blob([contents], { type: "application/json" });
+  async function exportFile(filename, contents, mime = "application/json", title = "Backup allenamento") {
+    const blob = new Blob([contents], { type: mime });
     // Su iPhone il foglio di condivisione permette di salvare nell'app File senza anteprima intermedia.
     try {
-      const file = new File([blob], filename, { type: "application/json" });
+      const file = new File([blob], filename, { type: mime });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Backup allenamento" });
+        await navigator.share({ files: [file], title });
         return true;
       }
     } catch (error) {
@@ -2954,6 +3000,47 @@
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
     return true;
+  }
+
+  function buildCsv() {
+    const cell = (value) => {
+      const text = String(value === undefined || value === null ? "" : value);
+      return /[;"\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const header = ["Data", "Blocco", "Settimana", "Giorno", "Esercizio", "Serie", "Kg", "Rip", "Rip dx", "Rip sx",
+      "Completata", "Minuti", "Dettagli", "RIR", "Note"];
+    const plansById = new Map(state.plans.map((plan) => [plan.id, plan]));
+    const rows = [];
+    const records = Object.values(state.records)
+      .sort((left, right) => String(left.updatedAt).localeCompare(String(right.updatedAt)));
+    for (const record of records) {
+      const date = new Date(record.updatedAt);
+      const day = Number.isNaN(date.getTime()) ? record.updatedAt : dateKey(date);
+      const plan = plansById.get(record.planId);
+      const exercise = plan && plan.days.flatMap((item) => item.exercises).find((item) => item.id === record.exerciseId);
+      const unilateral = Boolean(exercise && exercise.unilateral);
+      const common = [day, record.planName, record.week, record.dayName, record.exerciseName];
+      if (record.kind === "cardio" || !Array.isArray(record.series)) {
+        rows.push([...common, "", "", "", "", "", record.completed ? "sì" : "no", record.load, record.reps,
+          record.rir, record.notes]);
+        continue;
+      }
+      record.series.forEach((set, index) => {
+        if (!(set.load || set.reps || set.left || set.right || set.done)) return;
+        rows.push([...common, index + 1, set.load, unilateral ? "" : set.reps, unilateral ? set.right : "",
+          unilateral ? set.left : "", completeSet(set, unilateral) ? "sì" : "no", "", "", record.rir, record.notes]);
+      });
+    }
+    return `\uFEFF${[header, ...rows].map((row) => row.map(cell).join(";")).join("\r\n")}\r\n`;
+  }
+
+  async function exportCsv() {
+    if (!Object.keys(state.records).length) {
+      showNotice("Non ci sono ancora allenamenti registrati da esportare.", true);
+      return;
+    }
+    const done = await exportFile("allenamenti.csv", buildCsv(), "text/csv", "Allenamenti (CSV)");
+    if (done) showNotice("CSV pronto. Si apre con Excel, Numbers o Fogli.");
   }
 
   async function exportBackup() {
@@ -3031,6 +3118,9 @@
         "possono avere archivi separati. Il ripristino sostituisce i dati presenti nell'archivio corrente.")
     );
     card.append(button("Esporta backup", "secondary-button", exportBackup));
+    const csvHint = node("p", "hint", "Il backup (JSON) serve per ripristinare l'app. Il CSV è solo una tabella leggibile degli allenamenti, da aprire in Excel, Numbers o Fogli: non si può ripristinare.");
+    csvHint.style.marginTop = "10px";
+    card.append(button("Esporta tabella (CSV)", "secondary-button", exportCsv), csvHint);
     const label = node("label", "field-title", "Ripristina un backup");
     label.style.display = "block";
     label.style.margin = "16px 0 8px";
