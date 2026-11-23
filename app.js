@@ -518,6 +518,14 @@
     const gap = current && current.end ? now - Date.parse(current.end) : 0;
     if (!current || gap > 3 * 3600 * 1000) state.sessions[key] = { start: now.toISOString() };
     state.sessions[key].end = now.toISOString();
+    delete state.sessions[key].finished;
+  }
+
+  function finishSession(plan, day, week) {
+    touchSession(plan, day, week);
+    state.sessions[sessionKey(plan, day, week)].finished = true;
+    persist();
+    document.dispatchEvent(new CustomEvent("session-finished"));
   }
 
   function sessionStats(plan, day, week, exercises) {
@@ -809,13 +817,13 @@
     const bottom = node("div", "sheet-bottom");
     restTimerDock.hidden = false;
     bottom.append(restTimerDock);
-    const done = button("✓ Fatto", "primary-button done-button", () => {
+    const lastIndex = exercises.length - 1;
+    const done = button(index === lastIndex ? "✓ Fatto e termina" : "✓ Fatto", "primary-button done-button", () => {
       if (!card.sheetData.markDone()) return;
       closeExerciseSheet();
       const next = exercises.findIndex((item, itemIndex) => itemIndex > index && !recordIsComplete(plan, day, week, item));
-      const fallback = exercises.findIndex((item) => !recordIsComplete(plan, day, week, item));
-      const target = next >= 0 ? next : fallback;
-      if (target >= 0) openExercise(target);
+      if (index < lastIndex && next >= 0) openExercise(next);
+      else openSessionSummary(plan, day, week, exercises, true);
     });
     bottom.append(done);
     sheet.append(top, scroll, bottom);
@@ -1892,10 +1900,27 @@
     const list = node("div", "exercise-list");
     const cards = new Map();
     const dayIndex = plan.days.findIndex((item) => item.id === day.id);
-    let lastCompleted = null;
-    const summaryButton = button("Riepilogo seduta", "secondary-button summary-button",
-      () => openSessionSummary(plan, day, week, exercises));
-    summaryButton.hidden = true;
+    const finishButton = button("", "primary-button finish-button",
+      () => openSessionSummary(plan, day, week, exercises, true));
+    finishButton.hidden = true;
+    const sessionFinished = () => {
+      const session = isObject(state.sessions) ? state.sessions[sessionKey(plan, day, week)] : null;
+      return Boolean(session && session.finished);
+    };
+    const refreshFinish = () => {
+      if (!finishButton.isConnected) return;
+      const hasData = sessionStats(plan, day, week, exercises).setsDone > 0 ||
+        exercises.some((exercise) => recordIsComplete(plan, day, week, exercise));
+      finishButton.hidden = !hasData;
+      const finished = sessionFinished();
+      finishButton.textContent = finished ? "✓ Allenamento terminato · vedi riepilogo" : "Termina allenamento";
+      finishButton.classList.toggle("is-finished", finished);
+    };
+    const onSessionFinished = () => {
+      if (!finishButton.isConnected) document.removeEventListener("session-finished", onSessionFinished);
+      else refreshFinish();
+    };
+    document.addEventListener("session-finished", onSessionFinished);
     const updateCount = () => {
       const completed = exercises.filter((exercise) => recordIsComplete(plan, day, week, exercise)).length;
       const next = exercises.find((exercise) => !recordIsComplete(plan, day, week, exercise));
@@ -1907,11 +1932,7 @@
         card.classList.toggle("is-next", Boolean(next && next.id === exercise.id));
       }
       doneCount.textContent = `${completed}/${exercises.length} completati`;
-      summaryButton.hidden = !(completed > 0 || sessionStats(plan, day, week, exercises).setsDone > 0);
-      if (lastCompleted !== null && lastCompleted < exercises.length && completed === exercises.length) {
-        window.setTimeout(() => openSessionSummary(plan, day, week, exercises), 450);
-      }
-      lastCompleted = completed;
+      refreshFinish();
     };
     if (!exercises.length) {
       list.append(node("div", "empty-state", "Nessun esercizio programmato per questa settimana."));
@@ -1926,8 +1947,8 @@
       const card = cards.get(exercises[index].id);
       openExerciseSheet({ plan, day, week, exercises, index, card, openExercise });
     };
+    view.append(list, finishButton);
     updateCount();
-    view.append(list, summaryButton);
     updateRestTimerUI();
   }
 
@@ -1936,13 +1957,15 @@
     return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}` : `${minutes} min`;
   }
 
-  function openSessionSummary(plan, day, week, exercises) {
+  function openSessionSummary(plan, day, week, exercises, finish = false) {
+    if (finish) finishSession(plan, day, week);
     const stats = sessionStats(plan, day, week, exercises);
     const card = node("div", "summary-card");
-    const finished = stats.total > 0 && stats.exercisesDone === stats.total;
-    card.append(node("p", "summary-lead", finished
-      ? `${day.name} completato. Ottimo lavoro!`
-      : `Finora hai completato ${stats.exercisesDone} ${stats.exercisesDone === 1 ? "esercizio" : "esercizi"} su ${stats.total}.`));
+    const allDone = stats.total > 0 && stats.exercisesDone === stats.total;
+    const count = `${stats.exercisesDone} ${stats.exercisesDone === 1 ? "esercizio" : "esercizi"} su ${stats.total}`;
+    card.append(node("p", "summary-lead", finish
+      ? (allDone ? "Allenamento completato e salvato. Ottimo lavoro!" : `Allenamento salvato: ${count} completati.`)
+      : (allDone ? `${day.name} completato. Ottimo lavoro!` : `Finora hai completato ${count}.`)));
     const tiles = node("div", "summary-tiles");
     const tile = (label, value, unit = "") => {
       const item = node("div", "sheet-tile");
@@ -1971,7 +1994,11 @@
     } else {
       card.append(node("p", "hint", "Nessun nuovo record in questa seduta: i record compaiono quando superi peso o forza stimata delle sedute precedenti."));
     }
-    openHealthSheet(card, "Riepilogo seduta");
+    if (finish) {
+      card.append(node("p", "hint", "Tutti i dati sono salvati su questo dispositivo. Puoi riaprire l'allenamento e modificarlo quando vuoi."));
+      card.append(button("Chiudi", "primary-button summary-close", closeHealthSheet));
+    }
+    openHealthSheet(card, finish ? "Allenamento terminato" : "Riepilogo seduta");
   }
 
   function formatSetSummary(set, unilateral) {
@@ -2155,10 +2182,10 @@
     if (illustration) {
       const thumbnail = node("span", "exercise-thumbnail");
       const image = document.createElement("img");
-      image.src = illustration.src;
+      image.src = illustration.thumb || illustration.src;
       image.alt = "";
-      image.width = 144;
-      image.height = 60;
+      image.width = 80;
+      image.height = 56;
       image.loading = "lazy";
       thumbnail.append(image);
       top.append(thumbnail);
@@ -2186,22 +2213,54 @@
     const body = node("div", "card-body");
     body.append(node("h2", "sheet-title", exercise.name));
     if (illustration) {
-      const gallery = node("div", "exercise-gallery");
-      gallery.setAttribute("aria-label", `Illustrazioni di ${exercise.name}`);
-      ["posizione iniziale", "movimento"].forEach((label, imageIndex) => {
-        const panel = node("div", `illustration-panel${imageIndex ? " is-second" : ""}`);
-        const image = document.createElement("img");
-        image.src = illustration.src;
-        image.alt = `${exercise.name}: ${label}, schema indicativo.`;
-        image.width = 720;
-        image.height = 300;
-        image.loading = "lazy";
-        panel.append(image);
-        gallery.append(panel);
-      });
-      body.append(gallery);
-    }
-    const tiles = node("div", "sheet-tiles");
+      const buildVisual = () => {
+        const card = node("div", "visual-zoom");
+        const figure = node("div", "exercise-figure");
+        const big = document.createElement("img");
+        big.src = illustration.src;
+        big.alt = `${exercise.name}: schema indicativo con posizione di partenza, arrivo e direzione del movimento.`;
+        big.width = 366;
+        big.height = 270;
+        figure.append(big);
+        card.append(figure);
+        if (Array.isArray(illustration.cues) && illustration.cues.length) {
+          const cues = node("ol", "visual-cues");
+          illustration.cues.forEach((cue) => {
+            const item = node("li");
+            item.append(node("b", "", String(cue.n)), node("span", "", cue.text));
+            cues.append(item);
+          });
+          card.append(cues);
+        }
+        const note = node("div", "visual-note");
+        if (illustration.move) {
+          const move = node("p", "visual-move");
+          move.append(node("strong", "", "Movimento: "), document.createTextNode(illustration.move));
+          note.append(move);
+        }
+        if (illustration.avoid) {
+          const avoid = node("p", "visual-avoid");
+          avoid.append(node("strong", "", "Evita: "), document.createTextNode(illustration.avoid));
+          note.append(avoid);
+        }
+        if (note.childElementCount) card.append(note);
+        return card;
+      };
+      const peek = node("button", "exercise-peek");
+      peek.type = "button";
+      peek.setAttribute("aria-label", `Ingrandisci lo schema di ${exercise.name}`);
+      const small = document.createElement("img");
+      small.src = illustration.src;
+      small.alt = "";
+      small.width = 366;
+      small.height = 270;
+      peek.append(small);
+      const hint = node("span", "peek-hint");
+      hint.append(node("strong", "", illustration.muscle || "Schema"), node("small", "", "Tocca per ingrandire"));
+      peek.append(hint);
+      peek.addEventListener("click", () => openHealthSheet(buildVisual(), exercise.name));
+      body.append(peek);
+    }    const tiles = node("div", "sheet-tiles");
     const infoTile = (label, value, unit = "") => {
       const tile = node("div", "sheet-tile");
       const strong = node("strong", "", value);
@@ -2232,6 +2291,8 @@
     prChipSheet.hidden = true;
     chips.append(prChipSheet);
     body.append(chips);
+    const seriesSlot = node("div", "series-slot");
+    body.append(seriesSlot);
     const coachLines = coachingTip(plan, week, exercise, targetCount);
     if (coachLines.length) {
       const coach = node("section", "coach-tip");
@@ -2301,7 +2362,7 @@
       cardioDetails = field("Pendenza / velocità", existing ? existing.reps : "",
         { placeholder: "Es. 6% · 5 km/h", maxLength: 120 }, sync);
       grid.append(minutes.wrapper, cardioDetails.wrapper);
-      body.append(grid);
+      seriesSlot.append(grid);
     } else {
       const list = node("div", `series-table${exercise.unilateral ? " is-unilateral" : ""}`);
       const head = node("div", `series-row series-head${exercise.unilateral ? " is-unilateral" : ""}`);
@@ -2385,8 +2446,8 @@
         for (let index = 0; index < series.length; index += 1) addSetRow(index);
       };
       renderRows();
-      body.append(list);
-      body.append(button("+ Aggiungi serie", "add-set-button", () => {
+      seriesSlot.append(list);
+      seriesSlot.append(button("+ Aggiungi serie", "add-set-button", () => {
         if (series.length >= 20) return;
         series.push({ load: "", reps: "", left: "", right: "", done: false });
         seriesTouched = true;
@@ -2417,6 +2478,8 @@
         if (isCardio) {
           if (!minutes.input.value.trim()) {
             errorText.textContent = "Inserisci i minuti svolti per completare l'esercizio.";
+            errorText.scrollIntoView({ behavior: "smooth", block: "center" });
+            minutes.input.setAttribute("aria-invalid", "true");
             return false;
           }
           sync();
@@ -3094,6 +3157,11 @@
         isObject(item) && validId(item.id) && !ids.has(item.id) && ids.add(item.id) &&
         shortText(item.title, 120) && shortText(item.equipment, 100) &&
         typeof item.src === "string" && /^\.\/assets\/illustrazioni\/[a-z0-9-]+\.svg$/.test(item.src) &&
+        (item.thumb === undefined || (typeof item.thumb === "string" && /^\.\/assets\/illustrazioni\/[a-z0-9-]+\.svg$/.test(item.thumb))) &&
+        (item.cues === undefined || (Array.isArray(item.cues) && item.cues.length <= 6 &&
+          item.cues.every((cue) => isObject(cue) && Number.isInteger(cue.n) && shortText(cue.text, 120)))) &&
+        (item.move === undefined || shortText(item.move, 160, true)) &&
+        (item.avoid === undefined || shortText(item.avoid, 160, true)) &&
         Array.isArray(item.matches) && item.matches.every((name) => shortText(name, 200))
       )) throw new Error("Catalogo illustrazioni non valido");
       illustrationCatalog = catalog;

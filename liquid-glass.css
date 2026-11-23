@@ -729,3 +729,38 @@ h1, h2, h3, .tile-value, .volume-stat strong, .home-progress-number,
 .week-control { gap: 0; padding: 3px; }
 .week-control .icon-button { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
 .week-label { min-width: 70px; }
+.finish-button { width: 100%; margin-top: 16px; min-height: 54px; }
+.finish-button[hidden] { display: none; }
+.finish-button.is-finished { background: rgba(198,241,53,.14); color: #c6f135; border: .5px solid rgba(198,241,53,.45); box-shadow: none; }
+.summary-close { width: 100%; margin-top: 4px; }
+/* v59: illustrazioni v2 */
+.exercise-figure { margin: 12px 0 0; border-radius: 22px; overflow: hidden; border: .5px solid rgba(255,255,255,.12); background: #14171d; }
+.exercise-figure img { display: block; width: 100%; height: auto; }
+.visual-cues { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.visual-cues li { display: flex; gap: 12px; align-items: center; padding: 9px 0; border-top: .5px solid rgba(255,255,255,.1); color: #e9ecef; font-size: 14px; line-height: 1.35; }
+.visual-cues li b { flex: 0 0 22px; height: 22px; border-radius: 50%; background: #c6f135; color: #11150b; display: grid; place-items: center; font: 800 12px var(--font-sans); }
+.visual-note { display: grid; gap: 8px; margin: 6px 0 4px; }
+.visual-move, .visual-avoid { margin: 0; padding: 11px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.4; color: #e9ecef; }
+.visual-move { background: rgba(198,241,53,.10); border: .5px solid rgba(198,241,53,.35); }
+.visual-move strong { color: #c6f135; }
+.visual-avoid { background: rgba(255,107,94,.12); border: .5px solid rgba(255,107,94,.4); }
+.visual-avoid strong { color: #ff8b80; }
+.exercise-thumbnail { flex: 0 0 80px; width: 80px; height: 56px; border-radius: 13px; }
+.exercise-thumbnail img { position: static; transform: none; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+/* v60: schema richiudibile, serie in alto */
+.exercise-visual .exercise-figure { margin-top: 10px; }
+.exercise-visual[open] > summary { margin-bottom: 0; }
+.series-slot { margin-top: 12px; }
+.series-slot:empty { display: none; }
+/* v61: schema piccolo in alto, si ingrandisce al tocco */
+.exercise-peek {
+  display: flex; align-items: center; gap: 14px; width: 100%; margin: 4px 0 12px; padding: 8px 14px 8px 8px;
+  border-radius: 20px; border: .5px solid rgba(255,255,255,.14); background: #14171d; color: #f1f3f5; text-align: left;
+}
+.exercise-peek:active { transform: scale(.985); }
+.exercise-peek img { flex: 0 0 auto; width: 120px; height: auto; border-radius: 14px; display: block; }
+.peek-hint { display: grid; gap: 3px; min-width: 0; }
+.peek-hint strong { font: 700 15px var(--font-display); color: #c6f135; }
+.peek-hint small { font: 600 12px var(--font-sans); color: #b8bdc4; }
+.visual-zoom .exercise-figure { margin-top: 4px; }
+.health-sheet .visual-cues li { font-size: 15px; }

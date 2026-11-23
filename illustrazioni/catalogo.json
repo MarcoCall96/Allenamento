@@ -1,0 +1,814 @@
+[
+  {
+    "id": "multipower-30",
+    "title": "Panca 30° al multipower",
+    "equipment": "Multipower · panca inclinata",
+    "src": "./assets/illustrazioni/multipower-30.svg",
+    "matches": [
+      "Panca 30° al Multipower"
+    ],
+    "thumb": "./assets/illustrazioni/multipower-30-thumb.svg",
+    "muscle": "Petto alto",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Panca a circa 30°, schiena e piedi appoggiati"
+      },
+      {
+        "n": 2,
+        "text": "Sbarra sopra la parte alta del petto"
+      },
+      {
+        "n": 3,
+        "text": "Polsi sopra i gomiti, senza rimbalzo"
+      }
+    ],
+    "move": "Scendi lento e spingi espirando, senza inarcare la schiena.",
+    "avoid": "rimbalzi sul petto e schiena inarcata."
+  },
+  {
+    "id": "pulley-basso",
+    "title": "Pulley basso",
+    "equipment": "Pulley basso · cavo",
+    "src": "./assets/illustrazioni/pulley-basso.svg",
+    "matches": [
+      "Pulley Basso presa larga (gomiti a 45°, dorso alto)"
+    ],
+    "thumb": "./assets/illustrazioni/pulley-basso-thumb.svg",
+    "muscle": "Dorso",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Busto verticale, braccia distese"
+      },
+      {
+        "n": 2,
+        "text": "Tira verso la parte alta dell'addome"
+      },
+      {
+        "n": 3,
+        "text": "Gomiti a circa 45°, scapole vicine"
+      }
+    ],
+    "move": "Tira espirando, poi torna avanti lentamente.",
+    "avoid": "oscillare col busto e incurvare la schiena."
+  },
+  {
+    "id": "panca-manubri",
+    "title": "Spinte con manubri su panca piana",
+    "equipment": "Panca piana · manubri",
+    "src": "./assets/illustrazioni/panca-manubri.svg",
+    "matches": [
+      "Spinte Manubri Panca Piana"
+    ],
+    "thumb": "./assets/illustrazioni/panca-manubri-thumb.svg",
+    "muscle": "Petto",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Piedi a terra, manubri ai lati del petto"
+      },
+      {
+        "n": 2,
+        "text": "Spingi in alto senza far sbattere i manubri"
+      },
+      {
+        "n": 3,
+        "text": "Abbassa fin dove spalle e polsi stanno comodi"
+      }
+    ],
+    "move": "Spingi espirando e scendi in modo controllato.",
+    "avoid": "manubri che sbattono e fiato trattenuto."
+  },
+  {
+    "id": "lat-monobraccio",
+    "title": "Lat machine monobraccio",
+    "equipment": "Lat machine · maniglia singola",
+    "src": "./assets/illustrazioni/lat-monobraccio.svg",
+    "matches": [
+      "Lat Machine Monobraccio (cavo alto, seduto)"
+    ],
+    "thumb": "./assets/illustrazioni/lat-monobraccio-thumb.svg",
+    "muscle": "Dorso",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Busto stabile, spalla lontana dall'orecchio"
+      },
+      {
+        "n": 2,
+        "text": "Porta il gomito verso il fianco"
+      },
+      {
+        "n": 3,
+        "text": "Prima un lato, poi l'altro"
+      }
+    ],
+    "move": "Tira il gomito al fianco e risali lentamente.",
+    "avoid": "ruotare il busto."
+  },
+  {
+    "id": "pec-deck",
+    "title": "Pec deck",
+    "equipment": "Pec deck",
+    "src": "./assets/illustrazioni/pec-deck.svg",
+    "matches": [
+      "Pec Deck (pausa 1\" in apertura)"
+    ],
+    "thumb": "./assets/illustrazioni/pec-deck-thumb.svg",
+    "muscle": "Petto",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Maniglie all'altezza del petto"
+      },
+      {
+        "n": 2,
+        "text": "Gomiti morbidi"
+      },
+      {
+        "n": 3,
+        "text": "Pausa di 1 secondo in apertura"
+      }
+    ],
+    "move": "Chiudi davanti al petto, poi riapri con controllo.",
+    "avoid": "forzare l'apertura oltre il comodo."
+  },
+  {
+    "id": "alzate-manubri",
+    "title": "Alzate laterali da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/alzate-manubri.svg",
+    "matches": [
+      "Alzate Laterali Manubri da seduto",
+      "Alzate Laterali Manubri da seduto — pompaggio leggero"
+    ],
+    "thumb": "./assets/illustrazioni/alzate-manubri-thumb.svg",
+    "muscle": "Spalle",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Busto fermo, gomiti leggermente piegati"
+      },
+      {
+        "n": 2,
+        "text": "Sali fino all'altezza delle spalle"
+      },
+      {
+        "n": 3,
+        "text": "Scendi lentamente"
+      }
+    ],
+    "move": "Solleva di lato senza slancio e abbassa piano.",
+    "avoid": "slancio e spalle scrollate."
+  },
+  {
+    "id": "french-sdraiato",
+    "title": "French press da sdraiato",
+    "equipment": "Panca piana · manubri",
+    "src": "./assets/illustrazioni/french-sdraiato.svg",
+    "matches": [
+      "SS stessa panca piana: French Press Manubri da sdraiato"
+    ],
+    "thumb": "./assets/illustrazioni/french-sdraiato-thumb.svg",
+    "muscle": "Tricipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Manubri sopra le spalle"
+      },
+      {
+        "n": 2,
+        "text": "Gomiti verso l'alto, fermi"
+      },
+      {
+        "n": 3,
+        "text": "Spalle ferme"
+      }
+    ],
+    "move": "Piega i gomiti verso la testa, poi distendi.",
+    "avoid": "muovere le spalle."
+  },
+  {
+    "id": "curl-alternato",
+    "title": "Curl alternato da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/curl-alternato.svg",
+    "matches": [
+      "SS stessa panca piana: Curl Manubri alternato da seduto"
+    ],
+    "thumb": "./assets/illustrazioni/curl-alternato-thumb.svg",
+    "muscle": "Bicipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Gomiti vicini ai fianchi"
+      },
+      {
+        "n": 2,
+        "text": "Un braccio alla volta"
+      },
+      {
+        "n": 3,
+        "text": "Schiena stabile"
+      }
+    ],
+    "move": "Fletti un gomito, abbassa lento, poi alterna.",
+    "avoid": "dondolare il busto."
+  },
+  {
+    "id": "pressa-bassa",
+    "title": "Pressa 45° · piedi bassi e stretti",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/pressa-bassa.svg",
+    "matches": [
+      "Pressa 45° — piedi bassi e stretti (quad)"
+    ],
+    "thumb": "./assets/illustrazioni/pressa-bassa-thumb.svg",
+    "muscle": "Quadricipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Piedi bassi, larghezza delle anche"
+      },
+      {
+        "n": 2,
+        "text": "Ginocchia nella direzione dei piedi"
+      },
+      {
+        "n": 3,
+        "text": "Schiena e bacino appoggiati"
+      }
+    ],
+    "move": "Spingi espirando, senza bloccare le ginocchia.",
+    "avoid": "bloccare le ginocchia."
+  },
+  {
+    "id": "leg-curl-seduto",
+    "title": "Leg curl seduto",
+    "equipment": "Leg curl seduto",
+    "src": "./assets/illustrazioni/leg-curl-seduto.svg",
+    "matches": [
+      "Leg Curl Seduto"
+    ],
+    "thumb": "./assets/illustrazioni/leg-curl-seduto-thumb.svg",
+    "muscle": "Femorali",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Perno in linea con il ginocchio"
+      },
+      {
+        "n": 2,
+        "text": "Rullo appena sopra le caviglie"
+      },
+      {
+        "n": 3,
+        "text": "Schiena allo schienale"
+      }
+    ],
+    "move": "Fletti le ginocchia, contrai un attimo e risali lento.",
+    "avoid": "strattoni e bacino che si muove."
+  },
+  {
+    "id": "leg-extension",
+    "title": "Leg extension",
+    "equipment": "Leg extension",
+    "src": "./assets/illustrazioni/leg-extension.svg",
+    "matches": [
+      "Leg Extension (ultima serie: +2 mini-serie da 4 reps con 15\" di pausa)"
+    ],
+    "thumb": "./assets/illustrazioni/leg-extension-thumb.svg",
+    "muscle": "Quadricipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Perno in linea con il ginocchio"
+      },
+      {
+        "n": 2,
+        "text": "Rullo sulla parte bassa della tibia"
+      },
+      {
+        "n": 3,
+        "text": "Bacino appoggiato al sedile"
+      }
+    ],
+    "move": "Distendi senza slancio e scendi lentamente.",
+    "avoid": "scatti in chiusura; fermati se senti dolore al ginocchio."
+  },
+  {
+    "id": "calf-pressa",
+    "title": "Calf alla pressa",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/calf-pressa.svg",
+    "matches": [
+      "Calf alla Pressa (pausa 2\" in basso)"
+    ],
+    "thumb": "./assets/illustrazioni/calf-pressa-thumb.svg",
+    "muscle": "Polpacci",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Punte sulla parte bassa della pedana"
+      },
+      {
+        "n": 2,
+        "text": "Ginocchia morbide"
+      },
+      {
+        "n": 3,
+        "text": "Pausa di 2 secondi in basso, poi spingi"
+      }
+    ],
+    "move": "Scendi con i talloni, fermati 2 secondi e spingi sulle punte.",
+    "avoid": "rimbalzi e ginocchia bloccate."
+  },
+  {
+    "id": "dead-bug",
+    "title": "Dead bug",
+    "equipment": "Tappetino",
+    "src": "./assets/illustrazioni/dead-bug.svg",
+    "matches": [
+      "Core: Dead Bug (espira a ogni rep)"
+    ],
+    "thumb": "./assets/illustrazioni/dead-bug-thumb.svg",
+    "muscle": "Core",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Schiena stabile e comoda"
+      },
+      {
+        "n": 2,
+        "text": "Allunga braccio e gamba opposti"
+      },
+      {
+        "n": 3,
+        "text": "Solo fin dove controlli il tronco"
+      }
+    ],
+    "move": "Espira mentre allunghi, poi ritorna e alterna.",
+    "avoid": "inarcare la schiena."
+  },
+  {
+    "id": "tapis-roulant",
+    "title": "Tapis roulant inclinato",
+    "equipment": "Tapis roulant",
+    "src": "./assets/illustrazioni/tapis-roulant.svg",
+    "matches": [
+      "Tapis Roulant inclinato 5-8%",
+      "Tapis Roulant inclinato 5-8%"
+    ],
+    "thumb": "./assets/illustrazioni/tapis-roulant-thumb.svg",
+    "muscle": "Cardio",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Inclinazione tra 5 e 8%"
+      },
+      {
+        "n": 2,
+        "text": "Passo sostenibile: non serve correre"
+      },
+      {
+        "n": 3,
+        "text": "Respirazione confortevole"
+      }
+    ],
+    "move": "Cammina 15-20 minuti a ritmo costante.",
+    "avoid": "forzare il ritmo: devi respirare bene."
+  },
+  {
+    "id": "shoulder-press",
+    "title": "Shoulder press macchina",
+    "equipment": "Shoulder press",
+    "src": "./assets/illustrazioni/shoulder-press.svg",
+    "matches": [
+      "Shoulder Press Macchina (schiena adesa)"
+    ],
+    "thumb": "./assets/illustrazioni/shoulder-press-thumb.svg",
+    "muscle": "Spalle",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Maniglie all'altezza delle spalle"
+      },
+      {
+        "n": 2,
+        "text": "Schiena e piedi appoggiati"
+      },
+      {
+        "n": 3,
+        "text": "Spingi senza bloccare i gomiti"
+      }
+    ],
+    "move": "Spingi espirando e ritorna lentamente.",
+    "avoid": "inarcare la schiena."
+  },
+  {
+    "id": "lat-neutra",
+    "title": "Lat machine presa neutra",
+    "equipment": "Lat machine · impugnatura neutra",
+    "src": "./assets/illustrazioni/lat-neutra.svg",
+    "matches": [
+      "Lat Machine presa neutra larga"
+    ],
+    "thumb": "./assets/illustrazioni/lat-neutra-thumb.svg",
+    "muscle": "Dorso",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Cosce bloccate sotto i cuscinetti"
+      },
+      {
+        "n": 2,
+        "text": "Presa neutra larga"
+      },
+      {
+        "n": 3,
+        "text": "Gomiti in basso, barra davanti al petto"
+      }
+    ],
+    "move": "Porta i gomiti verso il basso e risali lentamente.",
+    "avoid": "tirare la barra dietro la nuca e dondolare."
+  },
+  {
+    "id": "chest-press",
+    "title": "Chest press orizzontale",
+    "equipment": "Chest press orizzontale",
+    "src": "./assets/illustrazioni/chest-press.svg",
+    "matches": [
+      "Chest Press Orizzontale (macchina)"
+    ],
+    "thumb": "./assets/illustrazioni/chest-press-thumb.svg",
+    "muscle": "Petto",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Maniglie all'altezza del petto"
+      },
+      {
+        "n": 2,
+        "text": "Schiena e piedi appoggiati"
+      },
+      {
+        "n": 3,
+        "text": "Non bloccare di colpo i gomiti"
+      }
+    ],
+    "move": "Spingi espirando e torna lentamente.",
+    "avoid": "inarcare la schiena."
+  },
+  {
+    "id": "rematore-appoggiato",
+    "title": "Rematore con petto appoggiato",
+    "equipment": "Rematore · supporto per il petto",
+    "src": "./assets/illustrazioni/rematore-appoggiato.svg",
+    "matches": [
+      "Rematore con petto appoggiato (T-bar / macchina)"
+    ],
+    "thumb": "./assets/illustrazioni/rematore-appoggiato-thumb.svg",
+    "muscle": "Dorso",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Petto appoggiato al supporto"
+      },
+      {
+        "n": 2,
+        "text": "Gomiti indietro, spalle basse"
+      },
+      {
+        "n": 3,
+        "text": "Ritorno lento"
+      }
+    ],
+    "move": "Tira i gomiti indietro espirando.",
+    "avoid": "slanci del busto."
+  },
+  {
+    "id": "alzate-cavo",
+    "title": "Alzate laterali al cavo",
+    "equipment": "Cavo basso · maniglia",
+    "src": "./assets/illustrazioni/alzate-cavo.svg",
+    "matches": [
+      "Alzate Laterali Cavo Monolaterale (cavo dietro la schiena)"
+    ],
+    "thumb": "./assets/illustrazioni/alzate-cavo-thumb.svg",
+    "muscle": "Spalle",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Maniglia dietro il fianco"
+      },
+      {
+        "n": 2,
+        "text": "Alza fino all'altezza della spalla"
+      },
+      {
+        "n": 3,
+        "text": "Busto dritto, una mano in appoggio"
+      }
+    ],
+    "move": "Solleva di lato e torna lentamente; poi cambia lato.",
+    "avoid": "inclinare il busto e scrollare la spalla."
+  },
+  {
+    "id": "croci-cavi",
+    "title": "Croci ai cavi dal basso",
+    "equipment": "Cavi bassi · maniglie",
+    "src": "./assets/illustrazioni/croci-cavi.svg",
+    "matches": [
+      "Croci ai Cavi dal basso verso l'alto (petto alto)"
+    ],
+    "thumb": "./assets/illustrazioni/croci-cavi-thumb.svg",
+    "muscle": "Petto alto",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Gomiti leggermente piegati"
+      },
+      {
+        "n": 2,
+        "text": "Mani davanti alla parte alta del petto"
+      },
+      {
+        "n": 3,
+        "text": "Busto fermo"
+      }
+    ],
+    "move": "Chiudi espirando e riapri lentamente.",
+    "avoid": "forzare le spalle."
+  },
+  {
+    "id": "french-seduto",
+    "title": "French press sopra la testa",
+    "equipment": "Panca · manubrio",
+    "src": "./assets/illustrazioni/french-seduto.svg",
+    "matches": [
+      "SS stessa panca: French Press sopra la testa con 1 manubrio da seduto"
+    ],
+    "thumb": "./assets/illustrazioni/french-seduto-thumb.svg",
+    "muscle": "Tricipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Un manubrio con due mani sopra la testa"
+      },
+      {
+        "n": 2,
+        "text": "Gomiti in avanti, fermi"
+      },
+      {
+        "n": 3,
+        "text": "Schiena stabile"
+      }
+    ],
+    "move": "Piega i gomiti dietro la testa e distendi.",
+    "avoid": "inarcare la schiena."
+  },
+  {
+    "id": "hammer-curl",
+    "title": "Hammer curl da seduto",
+    "equipment": "Panca · manubri",
+    "src": "./assets/illustrazioni/hammer-curl.svg",
+    "matches": [
+      "SS stessa panca: Hammer Curl Manubri da seduto"
+    ],
+    "thumb": "./assets/illustrazioni/hammer-curl-thumb.svg",
+    "muscle": "Bicipiti",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Palmi uno verso l'altro"
+      },
+      {
+        "n": 2,
+        "text": "Gomiti vicini ai fianchi"
+      },
+      {
+        "n": 3,
+        "text": "Spalle ferme"
+      }
+    ],
+    "move": "Fletti i gomiti e abbassa lentamente.",
+    "avoid": "dondolare il busto."
+  },
+  {
+    "id": "hip-thrust",
+    "title": "Hip thrust macchina",
+    "equipment": "Hip thrust machine",
+    "src": "./assets/illustrazioni/hip-thrust.svg",
+    "matches": [
+      "Hip Thrust Macchina (espira in salita, pausa 1\" in alto)"
+    ],
+    "thumb": "./assets/illustrazioni/hip-thrust-thumb.svg",
+    "muscle": "Glutei",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Cuscinetto sul bacino"
+      },
+      {
+        "n": 2,
+        "text": "Piedi a terra, larghezza delle anche"
+      },
+      {
+        "n": 3,
+        "text": "Schiena appoggiata, senza inarcare"
+      }
+    ],
+    "move": "Spingi in alto espirando, pausa 1 secondo, scendi controllato.",
+    "avoid": "inarcare la schiena."
+  },
+  {
+    "id": "pressa-alta",
+    "title": "Pressa 45° · piedi alti e larghi",
+    "equipment": "Pressa 45°",
+    "src": "./assets/illustrazioni/pressa-alta.svg",
+    "matches": [
+      "Pressa 45° — piedi alti e larghi (glutei/femorali)"
+    ],
+    "thumb": "./assets/illustrazioni/pressa-alta-thumb.svg",
+    "muscle": "Glutei e femorali",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Piedi alti, un po' più larghi delle anche"
+      },
+      {
+        "n": 2,
+        "text": "Ginocchia nella direzione delle punte"
+      },
+      {
+        "n": 3,
+        "text": "Schiena aderente allo schienale"
+      }
+    ],
+    "move": "Spingi espirando, senza bloccare le ginocchia.",
+    "avoid": "bloccare le ginocchia."
+  },
+  {
+    "id": "leg-curl-sdraiato",
+    "title": "Leg curl sdraiato",
+    "equipment": "Leg curl sdraiato",
+    "src": "./assets/illustrazioni/leg-curl-sdraiato.svg",
+    "matches": [
+      "Leg Curl Sdraiato"
+    ],
+    "thumb": "./assets/illustrazioni/leg-curl-sdraiato-thumb.svg",
+    "muscle": "Femorali",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Ginocchio in linea con il perno"
+      },
+      {
+        "n": 2,
+        "text": "Rullo sopra i talloni"
+      },
+      {
+        "n": 3,
+        "text": "Bacino appoggiato"
+      }
+    ],
+    "move": "Porta i talloni verso i glutei e torna lentamente.",
+    "avoid": "sollevare il bacino o usare slanci."
+  },
+  {
+    "id": "hyperextension",
+    "title": "Hyperextension 45°",
+    "equipment": "Panca per hyperextension 45°",
+    "src": "./assets/illustrazioni/hyperextension.svg",
+    "matches": [
+      "Hyperextension 45° (focus glutei, schiena leggermente arrotondata)"
+    ],
+    "thumb": "./assets/illustrazioni/hyperextension-thumb.svg",
+    "muscle": "Glutei",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Supporto sotto le anche"
+      },
+      {
+        "n": 2,
+        "text": "Scendi solo fin dove controlli"
+      },
+      {
+        "n": 3,
+        "text": "Risali fino ad allineare il corpo"
+      }
+    ],
+    "move": "Risali espirando contraendo i glutei.",
+    "avoid": "iperestendere la schiena."
+  },
+  {
+    "id": "abductor",
+    "title": "Abductor machine",
+    "equipment": "Abductor machine",
+    "src": "./assets/illustrazioni/abductor.svg",
+    "matches": [
+      "Abductor Machine (busto leggermente in avanti)"
+    ],
+    "thumb": "./assets/illustrazioni/abductor-thumb.svg",
+    "muscle": "Glutei",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Ginocchia sui cuscinetti"
+      },
+      {
+        "n": 2,
+        "text": "Bacino stabile, busto leggermente avanti"
+      },
+      {
+        "n": 3,
+        "text": "Apri lento, breve contrazione"
+      }
+    ],
+    "move": "Apri lentamente, contrai un attimo e richiudi.",
+    "avoid": "slancio e ampiezza forzata."
+  },
+  {
+    "id": "calf-seduto",
+    "title": "Calf raise da seduto",
+    "equipment": "Calf raise da seduto",
+    "src": "./assets/illustrazioni/calf-seduto.svg",
+    "matches": [
+      "Calf Raise da Seduto (pausa 1\" in alto)"
+    ],
+    "thumb": "./assets/illustrazioni/calf-seduto-thumb.svg",
+    "muscle": "Polpacci",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Avampiede sulla pedana"
+      },
+      {
+        "n": 2,
+        "text": "Cuscinetto sopra le cosce, vicino alle ginocchia"
+      },
+      {
+        "n": 3,
+        "text": "Pausa di 1 secondo in alto"
+      }
+    ],
+    "move": "Abbassa i talloni, sali sulle punte e fermati 1 secondo.",
+    "avoid": "rimbalzi."
+  },
+  {
+    "id": "reverse-pec-deck",
+    "title": "Reverse pec deck",
+    "equipment": "Reverse pec deck",
+    "src": "./assets/illustrazioni/reverse-pec-deck.svg",
+    "matches": [
+      "Reverse Pec Deck"
+    ],
+    "thumb": "./assets/illustrazioni/reverse-pec-deck-thumb.svg",
+    "muscle": "Spalle posteriori",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Maniglie all'altezza delle spalle"
+      },
+      {
+        "n": 2,
+        "text": "Petto appoggiato al supporto"
+      },
+      {
+        "n": 3,
+        "text": "Gomiti indietro, lieve flessione"
+      }
+    ],
+    "move": "Apri portando i gomiti indietro e ritorna piano.",
+    "avoid": "slancio e spalle alle orecchie."
+  },
+  {
+    "id": "pallof-press",
+    "title": "Pallof press",
+    "equipment": "Cavo · maniglia",
+    "src": "./assets/illustrazioni/pallof-press.svg",
+    "matches": [
+      "Core: Pallof Press ai cavi"
+    ],
+    "thumb": "./assets/illustrazioni/pallof-press-thumb.svg",
+    "muscle": "Core",
+    "cues": [
+      {
+        "n": 1,
+        "text": "Piedi stabili, di lato al cavo"
+      },
+      {
+        "n": 2,
+        "text": "Spingi le mani davanti a te"
+      },
+      {
+        "n": 3,
+        "text": "Il busto non ruota"
+      }
+    ],
+    "move": "Spingi, poi riporta le mani al petto respirando.",
+    "avoid": "ruotare il busto."
+  }
+]

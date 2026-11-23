@@ -1,12 +1,12 @@
 "use strict";
 
-const CACHE = "app-palestra-v57";
+const CACHE = "app-palestra-v61";
 const STATIC = [
   "./",
   "./index.html",
-  "./styles.css?v=57",
-  "./liquid-glass.css?v=57",
-  "./app.js?v=57",
+  "./styles.css?v=61",
+  "./liquid-glass.css?v=61",
+  "./app.js?v=61",
   "./scheda-iniziale.json",
   "./assets/illustrazioni/catalogo.json",
   "./manifest.webmanifest",
@@ -27,9 +27,10 @@ self.addEventListener("install", (event) => {
     const catalog = await response.json();
     if (!Array.isArray(catalog) || !catalog.every((item) =>
       item && typeof item.src === "string" &&
-      /^\.\/assets\/illustrazioni\/[a-z0-9-]+\.svg$/.test(item.src)
+      /^\.\/assets\/illustrazioni\/[a-z0-9-]+\.svg$/.test(item.src) &&
+      (item.thumb === undefined || /^\.\/assets\/illustrazioni\/[a-z0-9-]+\.svg$/.test(item.thumb))
     )) throw new Error("Catalogo illustrazioni non valido");
-    await fresh(catalog.map((item) => item.src));
+    await fresh(catalog.flatMap((item) => (item.thumb ? [item.src, item.thumb] : [item.src])));
     await self.skipWaiting();
   })());
 });
