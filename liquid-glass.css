@@ -781,3 +781,8 @@ h1, h2, h3, .tile-value, .volume-stat strong, .home-progress-number,
 .info-card .secondary-button + .secondary-button { margin-top: 10px; }
 .info-card > .secondary-button { margin: 0 8px 8px 0; }
 .info-card .secondary-button + .secondary-button { margin-top: 0; }
+
+/* v63: "Precedente" chiaro (ripetizioni x kg) */
+.series-prev.has-value { display: block; align-self: center; text-align: center; color: #d5d9de; font: 700 13px/1.25 var(--font-display); white-space: normal; letter-spacing: -.01em; }
+.prev-caption { margin: 8px 2px 0; color: #aeb3ba; font-size: 12px; line-height: 1.4; }
+.history-line { font-weight: 600; }

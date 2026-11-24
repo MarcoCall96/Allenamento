@@ -2027,10 +2027,23 @@
     openHealthSheet(card, finish ? "Allenamento terminato" : "Riepilogo seduta");
   }
 
+  // Gli id degli esercizi si ripetono tra i giorni (exercise-1...): l'id vale solo dentro lo stesso blocco e giorno.
+  function sameExercise(record, exercise, currentKey) {
+    if (record.exerciseName === exercise.name) return true;
+    let parts = null;
+    try {
+      parts = JSON.parse(currentKey);
+    } catch (error) {
+      return false;
+    }
+    return Array.isArray(parts) && record.planId === parts[0] && record.dayId === parts[1] &&
+      record.exerciseId === exercise.id;
+  }
+
   function formatSetSummary(set, unilateral) {
     const load = set.load ? `${formatNumber(Number(set.load.replace(",", ".")) || 0, 2)} kg` : "— kg";
     const reps = unilateral ? `dx ${set.right || "—"} · sx ${set.left || "—"}` : (set.reps || "—");
-    return `${reps} (${load})`;
+    return `${reps} × ${load}`;
   }
 
   function historyPanel(exercise, currentKey) {
@@ -2048,7 +2061,7 @@
       list.replaceChildren();
       const hasData = (set) => set.load || set.reps || set.left || set.right;
       const entries = Object.entries(state.records)
-        .filter(([, record]) => (record.exerciseName === exercise.name || record.exerciseId === exercise.id) &&
+        .filter(([, record]) => sameExercise(record, exercise, currentKey) &&
           (record.kind === "cardio" ? record.load : record.series && record.series.some(hasData)))
         .map(([key, record]) => ({ key, record }))
         .sort((left, right) => right.record.updatedAt.localeCompare(left.record.updatedAt));
@@ -2072,7 +2085,7 @@
           row.append(node("span", "history-line", `${record.load} min${record.reps ? ` · ${record.reps}` : ""}`));
         } else {
           record.series.forEach((set, index) => {
-            if (hasData(set)) row.append(node("span", "history-line", `${index + 1} × ${formatSetSummary(set, exercise.unilateral)}`));
+            if (hasData(set)) row.append(node("span", "history-line", `Serie ${index + 1}: ${formatSetSummary(set, exercise.unilateral)}`));
           });
         }
         list.append(row);
@@ -2371,12 +2384,17 @@
     }
 
     const historyView = historyPanel(exercise, key);
-    const previousRecord = Object.entries(state.records)
-      .filter(([otherKey, record]) => otherKey !== key && Array.isArray(record.series) &&
-        (record.exerciseName === exercise.name || record.exerciseId === exercise.id) &&
-        record.series.some((set) => set.load || set.reps || set.left || set.right))
-      .map(([, record]) => record)
-      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0];
+    const previousRecord = (() => {
+      const candidates = Object.entries(state.records)
+        .filter(([otherKey, record]) => otherKey !== key && Array.isArray(record.series) &&
+          sameExercise(record, exercise, key) &&
+          record.series.some((set) => set.load || set.reps || set.left || set.right))
+        .map(([, record]) => record);
+      const byRecent = (left, right) => right.updatedAt.localeCompare(left.updatedAt);
+      const earlier = candidates.filter((record) => record.planId === plan.id && record.week < week)
+        .sort((left, right) => right.week - left.week || byRecent(left, right));
+      return earlier[0] || candidates.sort(byRecent)[0];
+    })();
 
     const setFields = [];
     let minutes = null;
@@ -2416,11 +2434,10 @@
         const hasBefore = Boolean(before && (before.load || before.reps || before.left || before.right));
         const prev = node("span", "series-prev");
         if (hasBefore) {
-          const beforeReps = exercise.unilateral ? `${before.right || "—"} · ${before.left || "—"}` : (before.reps || "—");
-          prev.append(
-            node("b", "", beforeReps),
-            node("i", "", before.load ? `${formatNumber(Number(before.load.replace(",", ".")) || 0, 2)} kg` : "— kg")
-          );
+          const beforeReps = exercise.unilateral ? `${before.right || "—"}·${before.left || "—"}` : (before.reps || "—");
+          const beforeLoad = before.load ? `${formatNumber(Number(before.load.replace(",", ".")) || 0, 2)} kg` : "— kg";
+          prev.textContent = `${beforeReps} × ${beforeLoad}`;
+          prev.classList.add("has-value");
         } else {
           prev.textContent = "–";
         }
@@ -2490,6 +2507,14 @@
       };
       renderRows();
       seriesSlot.append(list);
+      if (previousRecord) {
+        const when = new Date(previousRecord.updatedAt);
+        const whenLabel = Number.isNaN(when.getTime()) ? ""
+          : ` · ${when.toLocaleDateString("it-IT", { day: "numeric", month: "short" })}`;
+        const caption = node("p", "prev-caption",
+          `Precedente = Settimana ${previousRecord.week} · ${previousRecord.dayName}${whenLabel} (ripetizioni × kg)`);
+        seriesSlot.append(caption);
+      }
       seriesSlot.append(button("+ Aggiungi serie", "add-set-button", () => {
         if (series.length >= 20) return;
         series.push({ load: "", reps: "", left: "", right: "", done: false });
