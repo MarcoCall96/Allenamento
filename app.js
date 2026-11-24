@@ -404,7 +404,7 @@
     document.querySelector(".topbar").classList.toggle("is-home", currentScreen === "home");
     heading.textContent = currentScreen === "home" ? "Riepilogo" :
       currentScreen === "workout" ? "Allenamento" :
-      currentScreen === "history" ? "Storico" :
+      currentScreen === "history" ? "Statistiche" :
       currentScreen === "more" ? "Altro" : "Modifica scheda";
   }
   scrollContent.addEventListener("scroll", syncTopbar, { passive: true });
@@ -865,6 +865,15 @@
     updateRestTimerUI();
   }
 
+  function smoothPath(points) {
+    return points.reduce((path, point, index) => {
+      if (!index) return `M ${point.x} ${point.y}`;
+      const previous = points[index - 1];
+      const mid = (previous.x + point.x) / 2;
+      return `${path} C ${mid} ${previous.y}, ${mid} ${point.y}, ${point.x} ${point.y}`;
+    }, "");
+  }
+
   function volumeChart(values, selectedWeek) {
     const width = Math.max(320, (values.length - 1) * 48 + 48);
     const height = 150;
@@ -955,14 +964,6 @@
         svg.append(dot);
       }
 
-      function smoothPath(points) {
-        return points.reduce((path, point, index) => {
-          if (!index) return `M ${point.x} ${point.y}`;
-          const previous = points[index - 1];
-          const mid = (previous.x + point.x) / 2;
-          return `${path} C ${mid} ${previous.y}, ${mid} ${point.y}, ${point.x} ${point.y}`;
-        }, "");
-      }
       const label = document.createElementNS(svg.namespaceURI, "text");
       label.setAttribute("x", String(point.x));
       label.setAttribute("y", "140");
@@ -3166,14 +3167,494 @@
     return card;
   }
 
+  // ===== Statistiche =====
+  let statsTab = "overview";
+  let statsDay = "all";
+
+  const MUSCLE_GROUPS = {
+    "Petto alto": "Petto", Petto: "Petto", Dorso: "Dorso", Spalle: "Spalle", "Spalle posteriori": "Spalle",
+    Tricipiti: "Braccia", Bicipiti: "Braccia", Quadricipiti: "Quadricipiti", Femorali: "Femorali",
+    Glutei: "Glutei", "Glutei e femorali": "Glutei", Polpacci: "Polpacci", Core: "Core",
+  };
+
+  function statNumber(value) {
+    const parsed = Number(String(value === undefined || value === null ? "" : value).replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function groupedNumber(value) {
+    return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function compactNumber(value) {
+    return value >= 10000 ? `${formatNumber(Math.round(value / 100) / 10, 1)}k` : groupedNumber(value);
+  }
+
+  // Nome breve per elenchi e titoli: toglie il prefisso superserie e le note tra parentesi.
+  function shortExerciseName(name) {
+    return name.replace(/^SS stessa panca(?: piana)?:\s*/i, "").replace(/\s*[(—].*$/, "").trim() || name;
+  }
+
+  function signedKg(value) {
+    return `${value > 0 ? "+" : value < 0 ? "−" : ""}${formatNumber(Math.abs(value), 2)} kg`;
+  }
+
+  function collectStats() {
+    const plan = activePlan();
+    const weeks = plan.weeks;
+    const exercises = [];
+    const dayCells = [];
+    for (const day of plan.days) {
+      for (const exercise of day.exercises) {
+        const illustration = exerciseIllustration(exercise);
+        const cardio = exercise.kind === "cardio";
+        const unilateral = Boolean(exercise.unilateral);
+        const entry = {
+          name: exercise.name, dayId: day.id, dayName: day.name, cardio, unilateral,
+          muscle: cardio ? "Cardio" : (MUSCLE_GROUPS[illustration && illustration.muscle] || "Altro"),
+          weeks: [],
+        };
+        for (let week = 1; week <= weeks; week += 1) {
+          const planned = cardio ? 1 : (exercise.sets[week - 1] || 0);
+          const record = state.records[recordKey(plan.id, day.id, week, exercise.id)];
+          const item = { week, planned, sets: 0, volume: 0, bestLoad: 0, bestReps: 0, reps: 0, e1rm: 0, best: null, minutes: 0 };
+          if (record && cardio) {
+            item.minutes = statNumber(record.load);
+            item.sets = record.completed ? 1 : 0;
+          } else if (record && Array.isArray(record.series)) {
+            for (const set of record.series) {
+              if (!completeSet(set, unilateral)) continue;
+              item.sets += 1;
+              const load = statNumber(set.load);
+              const reps = unilateral ? statNumber(set.left) + statNumber(set.right) : statNumber(set.reps);
+              if (load > 0 && reps > 0) item.volume += load * reps;
+              if (load > item.bestLoad) item.bestLoad = load;
+              item.reps += reps;
+              item.bestReps = Math.max(item.bestReps, unilateral ? Math.min(statNumber(set.left), statNumber(set.right)) : reps);
+              const score = setScore(set, unilateral);
+              if (score && score.e1rm > item.e1rm) {
+                item.e1rm = score.e1rm;
+                item.best = { load: score.load, reps: unilateral ? Math.min(statNumber(set.left), statNumber(set.right)) : statNumber(set.reps) };
+              }
+            }
+          }
+          entry.weeks.push(item);
+        }
+        entry.bodyweight = !cardio && entry.weeks.every((item) => item.bestLoad === 0) &&
+          entry.weeks.some((item) => item.bestReps > 0);
+        exercises.push(entry);
+      }
+      dayCells.push({ day, weeks: Array.from({ length: weeks }, (_, index) => dayProgress(plan, day, index + 1)) });
+    }
+    const records = [];
+    for (const entry of exercises) {
+      if (entry.cardio) continue;
+      let bestE1rm = 0;
+      let bestLoad = 0;
+      for (const item of entry.weeks) {
+        if (!item.e1rm) continue;
+        if (bestE1rm && item.e1rm > bestE1rm * 1.005) {
+          records.push({ name: entry.name, week: item.week, best: item.best, load: item.bestLoad,
+            gain: item.bestLoad > bestLoad ? item.bestLoad - bestLoad : 0 });
+        }
+        bestE1rm = Math.max(bestE1rm, item.e1rm);
+        bestLoad = Math.max(bestLoad, item.bestLoad);
+      }
+    }
+    records.sort((left, right) => right.week - left.week);
+    const totals = { sets: 0, volume: 0, daysDone: 0, daysTotal: 0 };
+    for (const entry of exercises) {
+      if (entry.cardio) continue;
+      for (const item of entry.weeks) {
+        totals.sets += item.sets;
+        totals.volume += item.volume;
+      }
+    }
+    for (const cell of dayCells) {
+      for (const progress of cell.weeks) {
+        if (progress.total > 0) totals.daysTotal += 1;
+        if (progress.total > 0 && progress.completed === progress.total) totals.daysDone += 1;
+      }
+    }
+    return { plan, weeks, exercises, dayCells, records, totals };
+  }
+
+  function svgChart(width, height, label) {
+    return svgNode("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": label, class: "stat-svg" });
+  }
+
+  function barChartSvg(values, selected, label) {
+    const width = 340;
+    const top = 24;
+    const base = 138;
+    const gap = 12;
+    const count = values.length;
+    const barWidth = (width - 16 - gap * (count - 1)) / count;
+    const maximum = Math.max(...values, 1);
+    const svg = svgChart(width, 164, label);
+    values.forEach((value, index) => {
+      const x = 8 + index * (barWidth + gap);
+      const height = value > 0 ? Math.max(5, value / maximum * (base - top)) : 4;
+      const current = index + 1 === selected;
+      svg.append(svgNode("rect", { x, y: base - height, width: barWidth, height, rx: 7,
+        fill: value > 0 ? (current ? "#c6f135" : "rgba(198,241,53,.42)") : "rgba(255,255,255,.12)" }));
+      if (value > 0) {
+        svg.append(svgNode("text", { x: x + barWidth / 2, y: base - height - 7, "text-anchor": "middle",
+          class: current ? "stat-value is-current" : "stat-value" }, compactNumber(value)));
+      }
+      svg.append(svgNode("text", { x: x + barWidth / 2, y: 157, "text-anchor": "middle",
+        class: current ? "stat-axis is-current" : "stat-axis" }, `S${index + 1}`));
+    });
+    return svg;
+  }
+
+  function lineChartSvg(points, label, decimals = 1) {
+    const width = 340;
+    const height = 196;
+    const left = 22;
+    const right = width - 22;
+    const top = 34;
+    const base = 150;
+    const values = points.filter((point) => point.value > 0).map((point) => point.value);
+    const svg = svgChart(width, height, label);
+    if (!values.length) return svg;
+    let low = Math.min(...values);
+    let high = Math.max(...values);
+    const spread = Math.max(high - low, high * 0.08, 1);
+    low -= spread * 0.35;
+    high += spread * 0.15;
+    const xAt = (index) => (points.length === 1 ? width / 2 : left + index * (right - left) / (points.length - 1));
+    const yAt = (value) => base - (value - low) / (high - low) * (base - top);
+    [0, 1, 2].forEach((step) => {
+      const y = top + step * (base - top) / 2;
+      svg.append(svgNode("line", { x1: left - 8, x2: right + 8, y1: y, y2: y, class: "stat-grid-line" }));
+    });
+    let path = "";
+    let area = "";
+    let started = false;
+    points.forEach((point, index) => {
+      if (!(point.value > 0)) {
+        started = false;
+        return;
+      }
+      path += `${started ? "L" : "M"} ${xAt(index).toFixed(1)} ${yAt(point.value).toFixed(1)} `;
+      started = true;
+    });
+    svg.append(svgNode("path", { d: path.trim(), class: "stat-line" }));
+    points.forEach((point, index) => {
+      if (!(point.value > 0)) return;
+      const x = xAt(index);
+      const y = yAt(point.value);
+      svg.append(svgNode("circle", { cx: x, cy: y, r: point.current ? 6 : 4.6, class: point.current ? "stat-dot is-current" : "stat-dot" }));
+      svg.append(svgNode("text", { x, y: y - 12, "text-anchor": "middle", class: "stat-value" }, formatNumber(point.value, decimals)));
+    });
+    points.forEach((point, index) => {
+      svg.append(svgNode("text", { x: xAt(index), y: 178, "text-anchor": "middle",
+        class: point.current ? "stat-axis is-current" : "stat-axis" }, point.label));
+    });
+    return svg;
+  }
+
+  function sparklineSvg(values) {
+    const width = 92;
+    const height = 34;
+    const svg = svgChart(width, height, "Andamento");
+    svg.setAttribute("aria-hidden", "true");
+    svg.removeAttribute("role");
+    svg.setAttribute("class", "stat-spark");
+    const present = values.filter((value) => value > 0);
+    if (!present.length) {
+      svg.append(svgNode("line", { x1: 4, x2: width - 4, y1: height / 2, y2: height / 2, class: "stat-grid-line" }));
+      return svg;
+    }
+    const low = Math.min(...present);
+    const high = Math.max(...present);
+    const spread = Math.max(high - low, high * 0.06, 1);
+    const xAt = (index) => (values.length === 1 ? width / 2 : 5 + index * (width - 10) / (values.length - 1));
+    const yAt = (value) => height - 6 - (value - (low - spread * 0.25)) / (spread * 1.5) * (height - 12);
+    let path = "";
+    let started = false;
+    let last = null;
+    values.forEach((value, index) => {
+      if (!(value > 0)) {
+        started = false;
+        return;
+      }
+      path += `${started ? "L" : "M"} ${xAt(index).toFixed(1)} ${yAt(value).toFixed(1)} `;
+      started = true;
+      last = { x: xAt(index), y: yAt(value) };
+    });
+    svg.append(svgNode("path", { d: path.trim(), class: "stat-spark-line" }));
+    if (last) svg.append(svgNode("circle", { cx: last.x, cy: last.y, r: 3.4, class: "stat-spark-dot" }));
+    return svg;
+  }
+
+  function statCard(title, copy) {
+    const card = node("section", "home-card stat-card");
+    card.append(node("h3", "", title));
+    if (copy) card.append(node("p", "hint", copy));
+    return card;
+  }
+
+  function segmented(options, current, onChange) {
+    const group = node("div", "stat-seg");
+    group.setAttribute("role", "tablist");
+    options.forEach(([value, label]) => {
+      const item = button(label, `stat-seg-item${value === current ? " is-active" : ""}`, () => onChange(value));
+      item.setAttribute("role", "tab");
+      item.setAttribute("aria-selected", String(value === current));
+      group.append(item);
+    });
+    return group;
+  }
+
+  function exerciseSummary(entry) {
+    const metric = (item) => (entry.cardio ? item.minutes : entry.bodyweight ? item.bestReps : item.bestLoad);
+    const done = entry.weeks.filter((item) => metric(item) > 0);
+    if (!done.length) return null;
+    const first = done[0];
+    const last = done[done.length - 1];
+    return { first, last, done, delta: done.length > 1 ? metric(last) - metric(first) : 0, metric };
+  }
+
+  function deltaBadge(entry, summary) {
+    const badge = node("span", "stat-delta");
+    if (!summary || summary.done.length < 2) {
+      badge.classList.add("is-flat");
+      badge.textContent = summary ? "1ª seduta" : "";
+      return badge;
+    }
+    const unit = entry.cardio ? " min" : entry.bodyweight ? " rip." : " kg";
+    const value = summary.delta;
+    badge.classList.add(value > 0 ? "is-up" : value < 0 ? "is-down" : "is-flat");
+    badge.textContent = value === 0 ? "stabile" : `${value > 0 ? "+" : "−"}${formatNumber(Math.abs(value), 2)}${unit}`;
+    return badge;
+  }
+
+  function lastLabel(entry, item) {
+    if (entry.cardio) return `${formatNumber(item.minutes)} min`;
+    if (entry.bodyweight) return `${item.bestReps} rip.`;
+    if (item.best) return `${item.best.reps} × ${formatNumber(item.best.load, 2)} kg`;
+    return `${formatNumber(item.bestLoad, 2)} kg`;
+  }
+
+  function openExerciseStats(entry, stats) {
+    const summary = exerciseSummary(entry);
+    const week = state.selection.week;
+    const card = node("div", "stat-detail");
+    if (!summary) {
+      card.append(node("p", "hint", "Ancora nessun dato per questo esercizio: appena completi le serie compare qui l'andamento."));
+      openHealthSheet(card, shortExerciseName(entry.name));
+      return;
+    }
+    const tiles = node("div", "summary-tiles");
+    const tile = (label, value, unit = "") => {
+      const item = node("div", "sheet-tile");
+      const strong = node("strong", "", value);
+      if (unit) strong.append(node("small", "", ` ${unit}`));
+      item.append(node("span", "", label), strong);
+      return item;
+    };
+    const total = entry.weeks.reduce((sum, item) => sum + (entry.cardio ? item.minutes : entry.bodyweight ? item.reps : item.volume), 0);
+    const gainPercent = !entry.cardio && !entry.bodyweight && summary.first.bestLoad > 0 && summary.done.length > 1
+      ? summary.delta / summary.first.bestLoad * 100 : null;
+    tiles.append(
+      tile("Ultima volta", lastLabel(entry, summary.last)),
+      tile("Da inizio blocco", summary.done.length > 1
+        ? (entry.cardio || entry.bodyweight ? `${summary.delta >= 0 ? "+" : "−"}${formatNumber(Math.abs(summary.delta))}` : signedKg(summary.delta).replace(" kg", ""))
+        : "—", entry.cardio ? "min" : entry.bodyweight ? "rip." : "kg"),
+      tile(entry.cardio ? "Minuti totali" : entry.bodyweight ? "Ripetizioni totali" : "Volume totale", groupedNumber(total),
+        entry.cardio ? "min" : entry.bodyweight ? "" : "kg"),
+      tile("Settimane fatte", `${summary.done.length}/${stats.weeks}`)
+    );
+    card.append(tiles);
+    if (gainPercent !== null) {
+      card.append(node("p", "stat-note", `${gainPercent >= 0 ? "+" : "−"}${formatNumber(Math.abs(gainPercent), 1)}% di carico massimo rispetto alla prima settimana registrata.`));
+    }
+    const lineCard = node("div", "stat-sub");
+    lineCard.append(node("h4", "", entry.cardio ? "Minuti per settimana" : entry.bodyweight ? "Ripetizioni migliori per settimana" : "Carico massimo per settimana (kg)"));
+    lineCard.append(lineChartSvg(entry.weeks.map((item) => ({
+      label: `S${item.week}`, value: entry.cardio ? item.minutes : entry.bodyweight ? item.bestReps : item.bestLoad, current: item.week === week,
+    })), `Andamento di ${entry.name}`, entry.cardio || entry.bodyweight ? 0 : 1));
+    card.append(lineCard);
+    if (!entry.cardio && !entry.bodyweight) {
+      const barCard = node("div", "stat-sub");
+      barCard.append(node("h4", "", "Volume per settimana (kg × rip.)"));
+      barCard.append(barChartSvg(entry.weeks.map((item) => item.volume), week, `Volume settimanale di ${entry.name}`));
+      card.append(barCard);
+    }
+    const table = node("div", "stat-table");
+    const recordWeeks = new Set(stats.records.filter((record) => record.name === entry.name).map((record) => record.week));
+    entry.weeks.forEach((item) => {
+      if (!item.planned) return;
+      const row = node("div", `stat-table-row${item.week === week ? " is-current" : ""}`);
+      row.append(node("b", "", `S${item.week}`));
+      const detail = (entry.cardio ? item.minutes > 0 : item.sets > 0)
+        ? (entry.cardio ? `${formatNumber(item.minutes)} min` : `${item.sets}/${item.planned} serie · migliore ${lastLabel(entry, item)}`)
+        : "non ancora fatto";
+      row.append(node("span", item.sets > 0 || item.minutes > 0 ? "" : "is-empty", detail));
+      if (recordWeeks.has(item.week)) row.append(node("em", "pr-badge", "Record"));
+      table.append(row);
+    });
+    card.append(table);
+    openHealthSheet(card, shortExerciseName(entry.name));
+  }
+
+  function renderStatsOverview(view, stats) {
+    const week = state.selection.week;
+    const grid = node("div", "stat-kpis");
+    const kpi = (label, value, unit = "", sub = "") => {
+      const item = node("div", "stat-kpi");
+      const strong = node("strong", "", value);
+      if (unit) strong.append(node("small", "", ` ${unit}`));
+      item.append(node("span", "", label), strong);
+      if (sub) item.append(node("small", "stat-sub-label", sub));
+      return item;
+    };
+    grid.append(
+      kpi("Allenamenti", `${stats.totals.daysDone}`, `/ ${stats.totals.daysTotal}`, "giornate completate"),
+      kpi("Serie", formatNumber(stats.totals.sets), "", "serie completate"),
+      kpi("Volume", compactNumber(stats.totals.volume), "kg", "peso × ripetizioni"),
+      kpi("Record", String(stats.records.length), "", "nuovi massimali")
+    );
+    view.append(grid);
+
+    const adherence = statCard("Costanza", "Per ogni giornata: esercizi completati sul totale.");
+    const matrix = node("div", "stat-matrix");
+    matrix.style.setProperty("--cols", String(stats.dayCells.length));
+    matrix.append(node("span", "stat-matrix-corner", ""));
+    stats.dayCells.forEach((cell) => matrix.append(node("span", "stat-matrix-head", cell.day.name)));
+    for (let w = 1; w <= stats.weeks; w += 1) {
+      matrix.append(node("span", `stat-matrix-week${w === week ? " is-current" : ""}`, `S${w}`));
+      stats.dayCells.forEach((cell) => {
+        const progress = cell.weeks[w - 1];
+        const ratio = progress.total ? progress.completed / progress.total : 0;
+        const item = node("span", `stat-matrix-cell${ratio === 1 ? " is-done" : ratio > 0 ? " is-partial" : ""}`,
+          progress.total ? `${progress.completed}/${progress.total}` : "–");
+        item.style.setProperty("--p", `${Math.round(ratio * 100)}%`);
+        item.setAttribute("aria-label", `Settimana ${w}, ${cell.day.name}: ${progress.completed} esercizi su ${progress.total}`);
+        matrix.append(item);
+      });
+    }
+    adherence.append(matrix);
+    view.append(adherence);
+
+    const volumes = Array.from({ length: stats.weeks }, (_, index) => weekVolume(stats.plan, index + 1));
+    const volumeCard = statCard("Volume per settimana", "Kg sollevati in totale (peso × ripetizioni).");
+    volumeCard.append(barChartSvg(volumes, week, "Volume sollevato per settimana"));
+    const previous = volumes[week - 2];
+    if (week > 1 && previous > 0 && volumes[week - 1] > 0) {
+      const change = (volumes[week - 1] - previous) / previous * 100;
+      const chip = node("span", `stat-delta ${change >= 0 ? "is-up" : "is-down"}`,
+        `${change >= 0 ? "+" : "−"}${formatNumber(Math.abs(change), 1)}% rispetto alla settimana ${week - 1}`);
+      volumeCard.append(chip);
+    }
+    view.append(volumeCard);
+
+    const muscles = new Map();
+    for (const entry of stats.exercises) {
+      if (entry.cardio) continue;
+      const item = entry.weeks[week - 1];
+      const slot = muscles.get(entry.muscle) || { done: 0, planned: 0 };
+      slot.done += Math.min(item.sets, item.planned || item.sets);
+      slot.planned += item.planned;
+      muscles.set(entry.muscle, slot);
+    }
+    const muscleCard = statCard(`Serie per muscolo · settimana ${week}`, "Serie fatte sul totale previsto dalla scheda.");
+    [...muscles.entries()].filter(([, slot]) => slot.planned > 0)
+      .sort((left, right) => right[1].planned - left[1].planned).forEach(([name, slot]) => {
+        const row = node("div", "stat-bar-row");
+        row.append(node("span", "stat-bar-name", name));
+        const track = node("span", "stat-bar-track");
+        const fill = node("span", "stat-bar-fill");
+        fill.style.width = `${Math.min(100, slot.planned ? slot.done / slot.planned * 100 : 0)}%`;
+        track.append(fill);
+        row.append(track, node("span", "stat-bar-value", `${slot.done}/${slot.planned}`));
+        muscleCard.append(row);
+      });
+    view.append(muscleCard);
+
+    const recordCard = statCard("Ultimi record", "Quando superi il tuo carico o la forza stimata delle settimane precedenti.");
+    if (!stats.records.length) {
+      recordCard.append(node("p", "volume-empty", "Ancora nessun record: compaiono dalla seconda settimana in poi."));
+    } else {
+      stats.records.slice(0, 6).forEach((record) => {
+        const row = node("div", "stat-record");
+        const text = node("div");
+        text.append(node("strong", "", shortExerciseName(record.name)),
+          node("small", "", `Settimana ${record.week} · ${record.best ? `${record.best.reps} × ${formatNumber(record.best.load, 2)} kg` : `${formatNumber(record.load, 2)} kg`}`));
+        row.append(text, node("span", "stat-delta is-up", record.gain > 0 ? signedKg(record.gain) : "più forte"));
+        recordCard.append(row);
+      });
+    }
+    view.append(recordCard);
+  }
+
+  function renderStatsExercises(view, stats) {
+    const days = stats.dayCells.map((cell) => cell.day);
+    const chips = node("div", "stat-chips");
+    [["all", "Tutti"], ...days.map((day) => [day.id, day.name])].forEach(([value, label]) => {
+      const chip = button(label, `stat-chip${statsDay === value ? " is-active" : ""}`, () => {
+        statsDay = value;
+        renderHistory();
+      });
+      chip.setAttribute("aria-pressed", String(statsDay === value));
+      chips.append(chip);
+    });
+    view.append(chips);
+    const list = node("div", "stat-list");
+    stats.exercises.filter((entry) => statsDay === "all" || entry.dayId === statsDay).forEach((entry) => {
+      const summary = exerciseSummary(entry);
+      const row = button("", "stat-row", () => openExerciseStats(entry, stats));
+      const name = node("div", "stat-row-name");
+      name.append(node("strong", "", shortExerciseName(entry.name)),
+        node("small", "", `${entry.dayName} · ${entry.muscle}${/^SS /i.test(entry.name) ? " · SS" : ""}`));
+      const values = entry.weeks.map((item) => (entry.cardio ? item.minutes : entry.bodyweight ? item.bestReps : item.bestLoad));
+      const trend = node("div", "stat-row-trend");
+      trend.append(sparklineSvg(values));
+      const last = node("div", "stat-row-last");
+      if (summary) {
+        last.append(node("strong", "", lastLabel(entry, summary.last)), deltaBadge(entry, summary));
+      } else {
+        last.append(node("small", "", "nessun dato"));
+      }
+      row.append(name, trend, last);
+      row.setAttribute("aria-label", `${entry.name}: apri andamento`);
+      list.append(row);
+    });
+    view.append(list);
+    view.append(node("p", "hint stat-foot", "Il grafico mostra il carico massimo di ogni settimana. Tocca un esercizio per il dettaglio."));
+  }
+
   function renderHistory() {
     const view = views.history;
     view.replaceChildren();
-    view.append(titleBlock(
-      "I TUOI PROGRESSI",
-      "Storico",
-      "Ogni allenamento racconta i tuoi progressi."
-    ));
+    const stats = collectStats();
+    const header = node("div", "page-header");
+    header.append(node("h1", "page-title", "Statistiche"),
+      node("p", "page-copy", `${stats.plan.name} · ${stats.weeks} settimane`));
+    view.append(header);
+    const hasData = Object.keys(state.records).length > 0;
+    if (!hasData) {
+      const empty = node("div", "empty-state");
+      empty.append(icon("history", 64),
+        node("p", "", "Il tuo percorso inizia dal primo allenamento: qui vedrai grafici e progressi."),
+        button("Inizia un allenamento", "primary-button", () => setScreen("workout")));
+      view.append(empty);
+      return;
+    }
+    view.append(segmented([["overview", "Panoramica"], ["exercises", "Esercizi"], ["log", "Cronologia"]], statsTab, (value) => {
+      statsTab = value;
+      renderHistory();
+    }));
+    const body = node("div", "stat-body");
+    view.append(body);
+    if (statsTab === "overview") renderStatsOverview(body, stats);
+    else if (statsTab === "exercises") renderStatsExercises(body, stats);
+    else renderChronology(body);
+  }
+
+  function renderChronology(view) {
     const records = Object.values(state.records)
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
     if (!records.length) {
